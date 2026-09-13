@@ -1,9 +1,11 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+const DEFAULT_SUPABASE_URL = "https://cqyyhjdexxhgtbjqghbo.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_Fmk7TahCHx21GvXmvpUwwQ_aOIB7uyg";
+
 function cleanEnvValue(val: string | undefined): string {
   if (!val) return "";
   let clean = val.trim();
-  // Quitar comillas accidentales si se pegaron en el panel de Vercel
   if (
     (clean.startsWith('"') && clean.endsWith('"')) ||
     (clean.startsWith("'") && clean.endsWith("'"))
@@ -17,10 +19,10 @@ function getCleanSupabaseUrl(): string {
   const raw =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
-    "";
+    DEFAULT_SUPABASE_URL;
   let url = cleanEnvValue(raw);
   url = url.replace(/\/rest\/v1\/?$/, "");
-  return url;
+  return url || DEFAULT_SUPABASE_URL;
 }
 
 function getCleanSupabaseAnonKey(): string {
@@ -29,12 +31,13 @@ function getCleanSupabaseAnonKey(): string {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
     process.env.SUPABASE_ANON_KEY ||
-    "";
-  return cleanEnvValue(raw);
+    DEFAULT_SUPABASE_ANON_KEY;
+  const clean = cleanEnvValue(raw);
+  return clean || DEFAULT_SUPABASE_ANON_KEY;
 }
 
-const supabaseUrl = getCleanSupabaseUrl();
-const supabaseAnonKey = getCleanSupabaseAnonKey();
+export const supabaseUrl = getCleanSupabaseUrl();
+export const supabaseAnonKey = getCleanSupabaseAnonKey();
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&

@@ -1,3 +1,5 @@
+"use client";
+
 import type { AppHeaderProps } from "@/lib/types";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase";
