@@ -89,7 +89,7 @@ export default function BookDetailPage({
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100">
-      <AppHeader title="Biblioteca Digital — Ficha de Libro" bookCount={catalog.books.length} />
+      <AppHeader title="Biblioteca Digital" currentLocation="Ficha de Libro" bookCount={catalog.books.length} />
 
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-8 flex flex-col gap-6">
         <div>

@@ -73,7 +73,7 @@ export function RoomSelector({
               return (
                 <div
                   key={room.id}
-                  className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-800 border border-indigo-500"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 border border-amber-500/60"
                 >
                   <input
                     type="text"
@@ -89,7 +89,7 @@ export function RoomSelector({
                   <button
                     type="button"
                     onClick={() => handleSaveRename(room.id)}
-                    className="p-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[11px]"
+                    className="p-1 rounded bg-amber-600 hover:bg-amber-500 text-white text-[11px]"
                     title="Guardar"
                   >
                     ✓
@@ -109,10 +109,10 @@ export function RoomSelector({
             return (
               <div
                 key={room.id}
-                className={`group relative flex items-center rounded-xl transition-all ${
+                className={`group relative flex items-center rounded-xl transition-all duration-200 ${
                   isActive
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                    ? "bg-slate-800 text-white shadow-md border border-amber-500/40"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-850"
                 }`}
               >
                 <button
@@ -120,18 +120,18 @@ export function RoomSelector({
                   onClick={() => onSelectRoom(room.id)}
                   className="px-3.5 py-1.5 text-xs font-semibold flex items-center gap-2"
                 >
-                  <span className="text-sm">🚪</span>
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${isActive ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-slate-600"}`} />
                   <span>{room.name}</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isActive ? "bg-black/30 text-indigo-100" : "bg-slate-800 text-slate-400"
+                    className={`text-[10px] px-2 py-0.2 rounded-full font-medium ${
+                      isActive ? "bg-black/30 text-amber-200" : "bg-slate-800 text-slate-400"
                     }`}
                   >
                     {roomShelves.length} {roomShelves.length === 1 ? "mueble" : "muebles"}
                   </span>
                   {roomBooksCount > 0 && (
                     <span
-                      className={`text-[10px] font-bold ${
+                      className={`text-[10px] font-semibold ${
                         isActive ? "text-amber-300" : "text-emerald-400"
                       }`}
                     >
@@ -149,7 +149,7 @@ export function RoomSelector({
                         e.stopPropagation();
                         handleStartRename(room);
                       }}
-                      className="p-1 rounded text-slate-300 hover:text-white hover:bg-black/20"
+                      className="p-1 rounded text-slate-300 hover:text-amber-300 hover:bg-black/20"
                       title="Renombrar habitación"
                     >
                       ✏️
@@ -179,7 +179,7 @@ export function RoomSelector({
           <button
             type="button"
             onClick={onOpenCreateModal}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-indigo-300 bg-indigo-950/70 hover:bg-indigo-900/70 border border-indigo-700/60 shadow-md transition-all flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-amber-300 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 shadow-md transition-all flex items-center gap-1.5 shrink-0 hover:border-amber-500/40"
           >
             <span>+</span>
             <span>Nueva Habitación</span>

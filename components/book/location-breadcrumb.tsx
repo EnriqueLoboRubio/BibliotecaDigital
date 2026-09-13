@@ -36,10 +36,10 @@ export function LocationBreadcrumb({
       <span className="text-slate-500">›</span>
 
       <span
-        className={`px-2 py-0.5 rounded-md font-semibold ${
+        className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
           isBehind
             ? "bg-amber-950/80 text-amber-300 border border-amber-700/60"
-            : "bg-blue-950/80 text-blue-300 border border-blue-700/60"
+            : "bg-slate-800 text-slate-200 border border-slate-700/80"
         }`}
       >
         {location.depthLabel}
@@ -47,8 +47,8 @@ export function LocationBreadcrumb({
 
       <span className="text-slate-500">›</span>
 
-      <span className="px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 font-mono font-bold">
-        Pos. #{location.position}
+      <span className="px-2.5 py-1 rounded-lg bg-amber-950/60 text-amber-200 border border-amber-700/50 text-xs font-semibold">
+        Posición #{location.position}
       </span>
     </nav>
   );

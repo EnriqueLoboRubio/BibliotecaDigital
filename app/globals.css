@@ -62,42 +62,38 @@ body {
   );
 }
 
-/* Marco Kallax realista */
+/* Marco Kallax realista con textura satinada y sombras profundas */
 .kallax-outer-frame {
   box-shadow: 
-    0 20px 35px -10px rgba(0, 0, 0, 0.15),
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.dark .kallax-outer-frame {
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 25px 60px -15px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Efecto de lomo de libro */
 .book-spine-shadow {
   box-shadow: 
-    -2px 0 4px rgba(0, 0, 0, 0.15),
-    inset 2px 0 2px rgba(255, 255, 255, 0.2),
-    inset -2px 0 2px rgba(0, 0, 0, 0.2);
+    -2px 0 5px rgba(0, 0, 0, 0.25),
+    inset 1.5px 0 1.5px rgba(255, 255, 255, 0.18),
+    inset -1.5px 0 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Efecto cristal / Glassmorphism */
+/* Efecto cristal refinado / Glassmorphism */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(11, 16, 26, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.dark .glass-effect {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.6);
+/* Ocultar barra de scroll conservando el desplazamiento */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Parquet de madera cálida para el suelo de la habitación */

@@ -59,10 +59,10 @@ export function ShelfUnit({
 
   return (
     <div className="w-full mx-auto flex flex-col items-center">
-      {/* Etiqueta / Información superior con opción de renombrar */}
-      <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 px-2">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+      {/* Cabecera del Mueble con identificación clara y controles sutiles */}
+      <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2.5 px-2">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50" />
 
           {isEditingName ? (
             <form onSubmit={handleSaveName} className="flex items-center gap-1.5">
@@ -71,14 +71,14 @@ export function ShelfUnit({
                 autoFocus
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                className="px-2 py-0.5 rounded bg-slate-900 border border-blue-500 text-xs text-white font-semibold focus:outline-none"
+                className="px-2.5 py-1 rounded-lg bg-slate-900 border border-amber-500 text-xs text-white font-semibold focus:outline-none shadow-sm"
               />
               <button
                 type="submit"
-                className="p-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs"
+                className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold"
                 title="Guardar nombre"
               >
-                ✓
+                Guardar
               </button>
               <button
                 type="button"
@@ -86,15 +86,15 @@ export function ShelfUnit({
                   setNameInput(shelf.name);
                   setIsEditingName(false);
                 }}
-                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs"
+                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs"
                 title="Cancelar"
               >
                 ✕
               </button>
             </form>
           ) : (
-            <div className="flex items-center gap-1.5 group">
-              <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase">
+            <div className="flex items-center gap-2 group">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
                 {shelf.name}
               </h2>
               {isAdmin && onRenameShelf && (
@@ -104,9 +104,9 @@ export function ShelfUnit({
                     setNameInput(shelf.name);
                     setIsEditingName(true);
                   }}
-                  className="p-1 text-slate-500 hover:text-blue-400 opacity-60 group-hover:opacity-100 transition-opacity"
-                  title="Editar nombre de la estantería"
-                  aria-label="Editar nombre de la estantería"
+                  className="p-1 text-slate-500 hover:text-amber-400 opacity-60 group-hover:opacity-100 transition-opacity"
+                  title="Renombrar estantería"
+                  aria-label="Renombrar estantería"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -116,28 +116,31 @@ export function ShelfUnit({
             </div>
           )}
 
-          <span className="text-xs text-slate-400 font-mono">
-            ({shelf.columns}×{shelf.rows} cubos)
-          </span>
-
-          <span className="text-xs text-slate-400 font-mono">
-            · {totalBooksInShelf} {totalBooksInShelf === 1 ? "libro" : "libros"}
-          </span>
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span className="text-slate-600">•</span>
+            <span>
+              {shelf.columns}×{shelf.rows} cubos ({shelf.columns * shelf.rows} espacios)
+            </span>
+            <span className="text-slate-600">•</span>
+            <span className="font-medium text-slate-300">
+              {totalBooksInShelf} {totalBooksInShelf === 1 ? "libro colocado" : "libros colocados"}
+            </span>
+          </div>
         </div>
 
-        {/* Acciones de configuración del mueble (solo admin) */}
-        <div className="flex items-center gap-2">
+        {/* Acciones de configuración del mueble */}
+        <div className="flex items-center gap-2 shrink-0">
           {isAdmin && (
             <button
               type="button"
               onClick={() => setIsConfigureMode(!isConfigureMode)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 shadow-sm ${
                 isConfigureMode
-                  ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
-                  : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700"
+                  ? "bg-amber-600 text-white shadow-amber-600/30"
+                  : "bg-slate-800/90 text-slate-300 hover:bg-slate-750 hover:text-white border border-slate-700/80"
               }`}
             >
-              <span>{isConfigureMode ? "✓ Listo" : "⚙️ Editar cubos"}</span>
+              <span>{isConfigureMode ? "✓ Listo" : "⚙️ Configurar cubos"}</span>
             </button>
           )}
 
@@ -145,9 +148,9 @@ export function ShelfUnit({
             <button
               type="button"
               onClick={() => onSelectShelf(shelf.id)}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium flex items-center gap-1"
+              className="text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium flex items-center gap-1"
             >
-              <span>Ver detalle</span>
+              <span>Abrir mueble</span>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
               </svg>

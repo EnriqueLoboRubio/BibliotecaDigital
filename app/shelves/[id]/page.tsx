@@ -161,7 +161,8 @@ export default function ShelfDetailPage({
   return (
     <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100">
       <AppHeader
-        title={`Biblioteca Digital — ${shelf.name}`}
+        title="Biblioteca Digital"
+        currentLocation={shelf.name}
         bookCount={books.length}
         onAddBook={
           canEdit

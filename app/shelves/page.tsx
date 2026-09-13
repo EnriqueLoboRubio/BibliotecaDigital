@@ -94,7 +94,7 @@ export default function ShelvesIndexPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100">
-      <AppHeader title="Biblioteca Digital — Muebles" bookCount={catalog.books.length} />
+      <AppHeader title="Biblioteca Digital" currentLocation="Muebles" bookCount={catalog.books.length} />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8 flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

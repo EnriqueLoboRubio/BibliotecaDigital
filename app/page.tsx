@@ -418,11 +418,24 @@ export default function HomePage() {
     ? resolveLocation(activeShelf, selectedBook.location)
     : null;
 
+  // Métricas inmediatas de la estantería y estancia activa
+  const activeShelfBooks = activeShelf
+    ? books.filter((b) => b.location.shelfId === activeShelf.id)
+    : [];
+  const activeShelfOccupiedCells = activeShelf
+    ? new Set(activeShelfBooks.map((b) => `${b.location.row}-${b.location.column}`)).size
+    : 0;
+  const activeShelfTotalCells = activeShelf ? activeShelf.columns * activeShelf.rows : 0;
+  const roomBooksCount = books.filter((b) =>
+    displayedShelves.some((s) => s.id === b.location.shelfId),
+  ).length;
+
   return (
     <div className="min-h-screen flex flex-col room-wall-ambient text-slate-100 overflow-x-hidden">
-      {/* Cabecera persistente */}
+      {/* Cabecera persistente con ubicación física */}
       <AppHeader
         title="Biblioteca Digital"
+        currentLocation={activeShelf ? `${activeRoom.name} · ${activeShelf.name}` : activeRoom.name}
         bookCount={books.length}
         onAddBook={
           canEdit
@@ -438,40 +451,65 @@ export default function HomePage() {
         }
       />
 
-      <main className="flex-1 w-full max-w-7xl 2xl:max-w-[1550px] mx-auto px-3 sm:px-6 pt-6 pb-2 flex flex-col gap-6 relative">
-        {/* Barra superior de localización espacial y buscador combobox */}
-        <section className="flex flex-col sm:flex-row items-center justify-between gap-4 z-30">
-          <div className="w-full sm:w-auto">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-semibold">
-                {activeRoom.name}
-              </span>
-              <span className="text-xs text-slate-400 font-mono">
-                ({displayedShelves.length} {displayedShelves.length === 1 ? "mueble" : "muebles"})
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <span>{activeRoom.name}</span>
-              <span className="text-slate-500 font-normal">/</span>
-              <span className="text-blue-400 font-semibold text-lg sm:text-xl">
+      <main className="flex-1 w-full max-w-7xl 2xl:max-w-[1550px] mx-auto px-3 sm:px-6 pt-5 pb-2 flex flex-col gap-5 relative">
+        {/* Jerarquía Espacial Inmediata: Comprensión en 2-3 segundos */}
+        <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 z-30 bg-slate-900/40 p-4 sm:p-5 rounded-2xl border border-slate-800/80 backdrop-blur-md">
+          <div className="flex-1 min-w-0">
+            {/* Migas de contexto físico */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1.5">
+              <span className="text-amber-400 font-semibold">Biblioteca</span>
+              <span className="text-slate-600">›</span>
+              <span className="text-slate-300 font-medium">{activeRoom.name}</span>
+              <span className="text-slate-600">›</span>
+              <span className="text-amber-300/90 font-medium">
                 {viewMode === "room"
-                  ? "Plano General"
+                  ? "Plano de la Estancia"
                   : activeShelf
                     ? activeShelf.name
                     : "Sin muebles"}
               </span>
+            </div>
+
+            {/* Título Principal y Estado */}
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex flex-wrap items-center gap-2">
+              <span>
+                {viewMode === "room"
+                  ? `Plano General — ${activeRoom.name}`
+                  : activeShelf
+                    ? activeShelf.name
+                    : "Habitación sin Muebles"}
+              </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+
+            {/* Subtítulo con instrucción clara de qué hacer a continuación */}
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
               {viewMode === "room"
-                ? "Distribución de muebles en la estancia. Haz clic en cualquiera para enfocarlo."
+                ? "Distribución física de muebles en la estancia. Pulsa en cualquiera para enfocarlo."
                 : activeShelf
-                  ? `Estantería de ${activeShelf.columns}×${activeShelf.rows} cubos. Haz clic en un cubo para desplegar la profundidad.`
-                  : "Esta estancia está vacía. Añade tu primer mueble para comenzar a organizar tus libros."}
+                  ? "Haz clic en cualquier cubo para ver sus libros y niveles de profundidad, o busca abajo por título o autor."
+                  : "Esta estancia no tiene estanterías asignadas. Añade un mueble para empezar a colocar libros."}
             </p>
+
+            {/* Métricas clave condensadas */}
+            {activeShelf && viewMode === "shelf" && (
+              <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-950/50 border border-amber-800/50 text-amber-200 font-medium">
+                  <span>📚</span>
+                  <strong>{activeShelfBooks.length}</strong> {activeShelfBooks.length === 1 ? "libro colocado" : "libros colocados"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
+                  <span>🗄️</span>
+                  <span>{activeShelfOccupiedCells} de {activeShelfTotalCells} cubos ocupados</span>
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 text-slate-500">
+                  · {roomBooksCount} en {activeRoom.name}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="w-full sm:w-80 md:w-96">
+          {/* Buscador de localización espacial */}
+          <div className="w-full lg:w-96 shrink-0">
             <SearchBox
               query={searchQuery}
               results={searchResults}
@@ -520,10 +558,10 @@ export default function HomePage() {
           />
         </section>
 
-        {/* Selector de Muebles de la Habitación Activa y botón para añadir más (solo si hay muebles) */}
+        {/* Selector de Muebles de la Habitación Activa */}
         {displayedShelves.length > 0 && (
           <section className="w-full flex items-center justify-between gap-3 overflow-x-auto pb-1 z-20">
-            <div className="flex items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 shadow-md">
+            <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-md">
               {displayedShelves.map((shelf) => {
                 const isActive = viewMode === "shelf" && activeShelfId === shelf.id;
                 const count = books.filter((b) => b.location.shelfId === shelf.id).length;
@@ -535,18 +573,19 @@ export default function HomePage() {
                       setActiveShelfId(shelf.id);
                       setViewMode("shelf");
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
                       isActive
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                        ? "bg-slate-800 text-white shadow-md border border-amber-500/40"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-850"
                     }`}
                   >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-amber-400" : "bg-slate-600"}`} />
                     <span>{shelf.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.2 bg-black/30 rounded-full font-mono">
+                    <span className="text-[10px] px-1.5 py-0.2 bg-black/30 rounded-full font-mono text-slate-400">
                       {shelf.columns}×{shelf.rows}
                     </span>
                     {count > 0 && (
-                      <span className="text-[10px] font-bold text-emerald-400">
+                      <span className={`text-[10px] font-semibold ${isActive ? "text-amber-300" : "text-emerald-400"}`}>
                         • {count}
                       </span>
                     )}
@@ -558,13 +597,13 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setViewMode("room")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
                     viewMode === "room"
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                      ? "bg-slate-800 text-white shadow-md border border-amber-500/40"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-850"
                   }`}
                 >
-                  <span>Plano de la Estancia</span>
+                  <span>Plano General</span>
                 </button>
               )}
             </div>
@@ -573,7 +612,7 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setIsAddShelfModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/70 border border-emerald-700/60 shadow-md transition-all flex items-center gap-1.5 shrink-0"
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-amber-300 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 shadow-md transition-all flex items-center gap-1.5 shrink-0 hover:border-amber-500/40"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -586,28 +625,28 @@ export default function HomePage() {
 
         {/* Estado Vacío / Onboarding guiado (solo si hay muebles pero no libros) */}
         {displayedShelves.length > 0 && books.length === 0 && (
-          <div className="rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900/80 to-slate-900/60 border border-blue-500/30 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-2xl backdrop-blur-md z-20">
+          <div className="rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-850/95 to-slate-900/95 border border-amber-500/30 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-2xl backdrop-blur-md z-20">
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-400">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-white">
-                  La biblioteca física está lista
+                  Tu biblioteca física está lista para catalogar
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5 max-w-xl">
-                  Selecciona cualquier cubo para colocar libros, añade nuevos muebles personalizados o carga ejemplos para explorar.
+                  Selecciona cualquier cubo para colocar libros con la cámara o código ISBN, o carga una colección de ejemplo para explorar.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
                 type="button"
                 onClick={handleLoadSamples}
-                className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+                className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors"
               >
                 Cargar libros de ejemplo
               </button>
@@ -617,7 +656,7 @@ export default function HomePage() {
                   setAddLocation(undefined);
                   setIsAddModalOpen(true);
                 }}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/25 transition-all"
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-md shadow-amber-950/40 border border-amber-400/30 transition-all"
               >
                 + Registrar libro
               </button>
@@ -723,22 +762,22 @@ export default function HomePage() {
       <div className="w-full flex flex-col mt-auto z-0">
         <div className="w-full h-4 skirting-board" />
         <div className="w-full h-24 sm:h-28 parquet-floor shadow-2xl relative px-4 sm:px-8 py-3 flex items-center justify-between">
-          <div className="flex flex-wrap items-center gap-4 text-xs text-amber-200/70">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-amber-200/80">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded bg-[#0e1626] border border-slate-700 inline-block" />
-              <span>Cubo útil</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#0e1626] border border-slate-700 inline-block" />
+              <span>Espacio útil</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded pattern-disabled border border-slate-800 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-sm pattern-disabled border border-slate-800 inline-block" />
               <span>Sin uso físico</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded bg-amber-900 border border-amber-700 inline-block" />
-              <span>Con libros en profundidad</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-amber-950 border border-amber-600 inline-block" />
+              <span>Con libros al fondo</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded bg-emerald-900 border border-emerald-700 inline-block" />
-              <span>Profundidades dinámicas</span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-slate-800 border border-slate-600 inline-block" />
+              <span>Múltiples profundidades</span>
             </div>
           </div>
 

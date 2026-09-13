@@ -159,22 +159,24 @@ export function CellDepthModal({
         {/* Cabecera del modal */}
         <div className="flex items-start justify-between border-b border-slate-800 pb-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                Fila {cell.row} · Columna {cell.column}
-              </span>
-              <span className="text-xs text-slate-400 font-mono">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5 text-xs">
+              <span className="font-semibold text-amber-400">
                 {shelf.name}
               </span>
-              <span className="text-xs text-emerald-400 font-medium px-2 py-0.5 bg-emerald-950/60 rounded border border-emerald-800/60">
-                {cell.depthCount} {cell.depthCount === 1 ? "profundidad" : "profundidades"}
+              <span className="text-slate-600">•</span>
+              <span className="text-slate-300 font-medium">
+                Fila {cell.row}, Columna {cell.column}
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="text-slate-400">
+                {cell.depthCount} {cell.depthCount === 1 ? "nivel" : "niveles de profundidad"}
               </span>
             </div>
-            <h2 id="cell-modal-title" className="text-xl font-bold text-white">
-              Cubo {cell.row}×{cell.column} — Inspección de Profundidad
+            <h2 id="cell-modal-title" className="text-xl font-bold tracking-tight text-white">
+              Libros en este Cubo
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Vista en planta: los libros del fondo arriba y los del frente abajo.
+              Vista en profundidad: los libros del fondo arriba y los del frente abajo.
             </p>
           </div>
           <button
@@ -229,9 +231,9 @@ export function CellDepthModal({
         {/* Barra de control de estado del cubo y capacidades */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium">Estado:</span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-950/80 border border-emerald-800/80 text-emerald-300">
-              ✓ Útil
+            <span className="text-xs text-slate-300 font-medium">Estado físico:</span>
+            <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-950/80 border border-emerald-800/80 text-emerald-300">
+              ✓ Habilitado
             </span>
             {isAdmin && onToggleCellEnabled && !showConfirmDisable && (
               <button
@@ -250,22 +252,22 @@ export function CellDepthModal({
               <button
                 type="button"
                 onClick={() => onUpdateDepthCount(cell.id, cell.depthCount + 1)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 transition-all flex items-center gap-1.5 shadow-sm"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>+ Añadir fila al fondo (Nivel {cell.depthCount + 1})</span>
+                <span>+ Añadir espacio al fondo</span>
               </button>
 
               {cell.depthCount > 1 && booksAtDepth(cellBooks, cell, cell.depthCount).length === 0 && (
                 <button
                   type="button"
                   onClick={() => onUpdateDepthCount(cell.id, cell.depthCount - 1)}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all"
                   title="Eliminar fila vacía del fondo"
                 >
-                  - Reducir
+                  - Reducir fondo
                 </button>
               )}
             </div>
@@ -284,7 +286,7 @@ export function CellDepthModal({
                 key={d}
                 className={`p-4 rounded-xl border transition-all ${
                   isFront
-                    ? "bg-slate-900/90 border-blue-500/30 shadow-lg shadow-blue-500/5"
+                    ? "bg-slate-900/90 border-amber-500/30 shadow-lg shadow-amber-500/5"
                     : "bg-slate-950/70 border-slate-800"
                 }`}
               >
@@ -292,13 +294,13 @@ export function CellDepthModal({
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
                         isFront
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-800 text-slate-300 border border-slate-700"
+                          ? "bg-amber-600/90 text-white shadow-sm"
+                          : "bg-slate-800/90 text-slate-300 border border-slate-700/80"
                       }`}
                     >
-                      {label} (Profundidad {d})
+                      {isFront ? "Frente (primera fila)" : label}
                     </span>
                     <span className="text-xs text-slate-400">
                       {depthBooks.length} {depthBooks.length === 1 ? "libro" : "libros"}
@@ -309,9 +311,9 @@ export function CellDepthModal({
                     <button
                       type="button"
                       onClick={() => onAddBookToCell(cell.row, cell.column, d)}
-                      className="text-xs font-medium text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-md border border-blue-500/30 transition-colors flex items-center gap-1"
+                      className="text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/60 px-3 py-1 rounded-xl border border-amber-700/50 transition-colors flex items-center gap-1.5 shadow-sm"
                     >
-                      <span>+ Añadir en este nivel</span>
+                      <span>+ Colocar libro aquí</span>
                     </button>
                   )}
                 </div>

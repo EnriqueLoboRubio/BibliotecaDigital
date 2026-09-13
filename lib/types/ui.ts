@@ -74,6 +74,7 @@ export interface SearchBoxProps {
 
 export interface AppHeaderProps {
   title: string;
+  currentLocation?: string;
   bookCount?: number;
   onAddBook?: () => void;
 }

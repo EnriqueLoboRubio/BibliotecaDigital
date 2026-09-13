@@ -19,7 +19,7 @@ export function ShelfCellView({
   const behind = depth === undefined ? hiddenBookCount(books, cell) : 0;
   const label = cell.enabled
     ? `Cubo fila ${cell.row} columna ${cell.column}, ${visibleBooks.length} libros al frente${behind > 0 ? `, ${behind} detrás` : ""}`
-    : `Cubo fila ${cell.row} columna ${cell.column}, sin uso. Haz clic para activar o ver opciones.`;
+    : `Cubo fila ${cell.row} columna ${cell.column}, sin uso físico.`;
 
   // Comprobar si algún libro dentro de esta celda está resaltado
   const hasHighlightedBook = books.some(
@@ -53,23 +53,23 @@ export function ShelfCellView({
           }
         }}
         className={`
-          relative min-h-[110px] sm:min-h-[135px] md:min-h-0 md:aspect-square rounded bg-slate-900/60 pattern-disabled border border-slate-800/90
-          flex flex-col items-center justify-center select-none cursor-pointer p-1.5 sm:p-2 transition-all group
-          hover:border-slate-600 hover:bg-slate-900/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
-          ${isConfigureMode ? "ring-2 ring-emerald-500/40 hover:ring-emerald-400 border-emerald-500/30" : ""}
+          relative min-h-[115px] sm:min-h-[140px] md:min-h-0 md:aspect-square rounded-xl bg-slate-900/40 pattern-disabled border border-slate-800/70
+          flex flex-col items-center justify-center select-none cursor-pointer p-2 transition-all duration-200 group
+          hover:border-slate-700 hover:bg-slate-900/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400
+          ${isConfigureMode ? "ring-2 ring-emerald-500/50 hover:ring-emerald-400 border-emerald-500/40" : ""}
         `}
       >
         <span
-          className={`text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded border shadow transition-colors ${
+          className={`text-[10px] font-medium px-2 py-0.5 rounded-lg border transition-colors ${
             isConfigureMode
               ? "bg-emerald-950/90 text-emerald-300 border-emerald-700/60"
-              : "text-slate-400 bg-slate-900/90 border-slate-700/50 group-hover:text-slate-200 group-hover:border-slate-600"
+              : "text-slate-500 bg-slate-950/80 border-slate-800/80 group-hover:text-slate-300 group-hover:border-slate-700"
           }`}
         >
           {isConfigureMode ? "+ Activar" : "Sin uso"}
         </span>
-        <span className="text-[8px] sm:text-[9px] text-slate-500 mt-1 font-mono">
-          {cell.row}×{cell.column}
+        <span className="text-[9px] text-slate-600 mt-1 font-mono select-none">
+          {cell.row} · {cell.column}
         </span>
       </div>
     );
@@ -96,34 +96,35 @@ export function ShelfCellView({
       }}
       onClick={handleClickCell}
       className={`
-        relative min-h-[110px] sm:min-h-[135px] md:min-h-0 md:aspect-square rounded flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-200
-        bg-gradient-to-b from-[#0e1626] to-[#0a0f1d] border border-slate-700/80 hover:border-blue-400/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400
-        group shadow-inner
-        ${hasHighlightedBook ? "ring-2 ring-amber-400 border-amber-400 shadow-lg shadow-amber-500/20" : ""}
-        ${isConfigureMode ? "ring-1 ring-amber-500/30 hover:ring-2 hover:ring-red-400" : ""}
+        relative min-h-[115px] sm:min-h-[140px] md:min-h-0 md:aspect-square rounded-xl flex flex-col justify-between overflow-hidden cursor-pointer transition-all duration-200
+        bg-gradient-to-b from-[#0e1626] via-[#090f1c] to-[#060a14] border border-slate-800 hover:border-amber-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400
+        group shadow-lg hover:shadow-black/60
+        ${hasHighlightedBook ? "ring-2 ring-amber-400 border-amber-400 shadow-xl shadow-amber-500/20" : ""}
+        ${isConfigureMode ? "ring-1 ring-amber-500/40 hover:ring-2 hover:ring-red-400" : ""}
       `}
     >
-      {/* Cabecera del cubo: coordenadas e indicador de libros detrás */}
-      <div className="flex items-center justify-between p-1 sm:p-1.5 z-10 pointer-events-none gap-1">
-        <span className="text-[9px] sm:text-[10px] font-mono font-medium text-slate-400 bg-slate-900/85 px-1 sm:px-1.5 py-0.5 rounded border border-slate-800 shrink-0">
-          F{cell.row}·C{cell.column}
+      {/* Cabecera del cubo: coordenada discreta y estado de fondo */}
+      <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5 z-10 pointer-events-none gap-1">
+        {/* Coordenada sutil no invasiva */}
+        <span className="text-[9px] sm:text-[10px] text-slate-500 font-medium tracking-wider opacity-60 group-hover:opacity-100 transition-opacity shrink-0 select-none">
+          {cell.row} · {cell.column}
         </span>
 
         {behind > 0 ? (
-          <span className="text-[8px] sm:text-[10px] font-medium text-amber-300 bg-amber-950/80 border border-amber-700/60 px-1 sm:px-1.5 py-0.5 rounded shadow flex items-center gap-1 shrink-0">
+          <span className="text-[9px] sm:text-[10px] font-medium text-amber-300 bg-amber-950/70 border border-amber-700/50 px-1.5 py-0.5 rounded-md shadow-sm flex items-center gap-1 shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-            <span className="hidden sm:inline">{behind} detrás{cell.depthCount > 2 ? ` (${cell.depthCount}p)` : ""}</span>
+            <span className="hidden sm:inline">+{behind} al fondo</span>
             <span className="sm:hidden">+{behind}</span>
           </span>
         ) : cell.depthCount > 2 ? (
-          <span className="text-[8px] sm:text-[9px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-1 py-0.5 rounded shrink-0">
-            {cell.depthCount}p
+          <span className="text-[8px] sm:text-[9px] text-slate-500 bg-slate-900/60 border border-slate-800/60 px-1.5 py-0.5 rounded shrink-0">
+            {cell.depthCount} niveles
           </span>
         ) : null}
       </div>
 
       {/* Interior del cubo: Balda inferior con los lomos de libros */}
-      <div className="relative flex-1 flex items-end justify-start px-1.5 sm:px-2.5 pb-1.5 sm:pb-2 pt-1 overflow-x-auto no-scrollbar gap-1 sm:gap-1.5 border-b-4 border-amber-950/50">
+      <div className="relative flex-1 flex items-end justify-start px-2 sm:px-2.5 pb-1.5 overflow-x-auto no-scrollbar gap-1 sm:gap-1.5 border-b-[5px] border-[#22170f]">
         {visibleBooks.length > 0 ? (
           visibleBooks.map((book) => (
             <BookSpine
@@ -139,17 +140,24 @@ export function ShelfCellView({
             />
           ))
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 group-hover:text-slate-300 transition-colors">
-            <span className="text-[10px] sm:text-xs font-medium">0 libros</span>
-            <span className="text-[8px] sm:text-[9px] text-slate-500 group-hover:text-blue-400 mt-0.5 transition-colors">
-              + Ver cubo
+          <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 group-hover:text-slate-300 transition-colors select-none py-1">
+            <div className="w-6 h-6 rounded-lg border border-dashed border-slate-700/70 group-hover:border-amber-400/50 flex items-center justify-center mb-1 text-slate-600 group-hover:text-amber-400 transition-colors">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <span className="text-[10px] sm:text-[11px] font-medium text-slate-400 group-hover:text-slate-200 transition-colors">
+              Hueco libre
+            </span>
+            <span className="text-[8px] sm:text-[9px] text-slate-600 group-hover:text-amber-300/80 transition-colors">
+              Explorar cubo
             </span>
           </div>
         )}
       </div>
 
-      {/* Sombra de repisa inferior para mayor profundidad */}
-      <div className="h-1.5 bg-gradient-to-t from-black/40 to-transparent w-full pointer-events-none" />
+      {/* Sombra de repisa inferior para mayor profundidad física */}
+      <div className="h-1 bg-gradient-to-t from-black/50 to-transparent w-full pointer-events-none" />
     </div>
   );
 }
