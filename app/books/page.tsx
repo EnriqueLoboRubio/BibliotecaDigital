@@ -11,6 +11,7 @@ import {
   initialRoom,
   initialShelves,
   saveCellsToStorage,
+  subscribeToLibraryChanges,
   updateBook,
 } from "@/lib/data";
 import { resolveLocation } from "@/lib/selectors";
@@ -29,6 +30,14 @@ export default function BooksIndexPage() {
 
   useEffect(() => {
     getCatalog().then(setCatalog);
+
+    const unsubscribe = subscribeToLibraryChanges((freshCatalog) => {
+      setCatalog(freshCatalog);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const shelf = catalog.shelves[0] || initialShelves[0];

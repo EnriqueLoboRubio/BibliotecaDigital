@@ -11,6 +11,7 @@ import {
   initialCells,
   initialRoom,
   initialShelves,
+  subscribeToLibraryChanges,
   updateShelfName,
 } from "@/lib/data";
 import type { LibraryCatalog } from "@/lib/types";
@@ -29,6 +30,14 @@ export default function ShelvesIndexPage() {
 
   useEffect(() => {
     getCatalog().then(setCatalog);
+
+    const unsubscribe = subscribeToLibraryChanges((freshCatalog) => {
+      setCatalog(freshCatalog);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleCreateCustomShelf = (

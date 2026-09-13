@@ -71,3 +71,15 @@ CREATE POLICY "Permitir todo a anon en rooms" ON public.rooms FOR ALL USING (tru
 CREATE POLICY "Permitir todo a anon en shelves" ON public.shelves FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a anon en cells" ON public.cells FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a anon en books" ON public.books FOR ALL USING (true) WITH CHECK (true);
+
+-- 7. HABILITAR REALTIME (Sincronización en vivo multidispositivo)
+-- Permite que los cambios se envíen instantáneamente a móviles y ordenadores vía WebSockets
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'books'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.books, public.cells, public.shelves, public.rooms;
+  END IF;
+END $$;

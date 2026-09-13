@@ -52,10 +52,10 @@ export function AppHeader({ title, bookCount, onAddBook }: AppHeaderProps) {
           {isSupabaseConfigured && (
             <span
               className="hidden sm:inline-flex items-center gap-1.5 text-[10px] text-emerald-300 bg-emerald-950/80 px-2 py-1 rounded-lg border border-emerald-800/70 font-mono shadow-sm"
-              title="Base de datos Supabase conectada en la nube"
+              title="Base de datos Supabase conectada con sincronización en vivo multidispositivo"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Nube</span>
+              <span>Nube (En vivo)</span>
             </span>
           )}
 

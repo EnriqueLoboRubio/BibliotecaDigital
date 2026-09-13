@@ -13,6 +13,7 @@ import {
   initialShelves,
   saveBooksToStorage,
   saveCellsToStorage,
+  subscribeToLibraryChanges,
   toggleCellEnabled,
   updateBook,
   updateShelfName,
@@ -47,6 +48,15 @@ export default function ShelfDetailPage({
       setCatalog(data);
       setBooks(data.books);
     });
+
+    const unsubscribe = subscribeToLibraryChanges((freshCatalog) => {
+      setCatalog(freshCatalog);
+      setBooks(freshCatalog.books);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const shelf = catalog.shelves.find((s) => s.id === shelfId) || catalog.shelves[0];

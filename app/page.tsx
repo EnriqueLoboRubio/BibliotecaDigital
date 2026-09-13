@@ -13,6 +13,7 @@ import {
   SAMPLE_BOOKS,
   saveBooksToStorage,
   saveCellsToStorage,
+  subscribeToLibraryChanges,
   toggleCellEnabled,
   updateBook,
   updateShelfName,
@@ -79,6 +80,16 @@ export default function HomePage() {
         }
       }
     });
+
+    // Suscripción en tiempo real (Supabase Realtime + StorageEvent multidispositivo)
+    const unsubscribe = subscribeToLibraryChanges((freshCatalog) => {
+      setCatalog(freshCatalog);
+      setBooks(freshCatalog.books);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Actualizar búsqueda en tiempo real

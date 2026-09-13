@@ -1,5 +1,6 @@
 import type { Book, LibraryCatalog, Room, Shelf, ShelfCell } from "@/lib/types";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export const initialRoom: Room = {
   id: "room-1",
@@ -600,6 +601,96 @@ export async function getCatalog(): Promise<LibraryCatalog> {
     shelves,
     cells,
     books,
+  };
+}
+
+/**
+ * Suscribe a cambios en tiempo real provenientes de otros dispositivos (Supabase Realtime)
+ * y de otras pestañas en el mismo navegador (StorageEvent).
+ * Permite que cualquier dispositivo conectado refleje los cambios al instante.
+ */
+export function subscribeToLibraryChanges(
+  onSync: (catalog: LibraryCatalog) => void,
+): () => void {
+  let isSubscribed = true;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const triggerReload = () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      if (!isSubscribed) return;
+      try {
+        const fresh = await getCatalog();
+        if (isSubscribed) {
+          onSync(fresh);
+        }
+      } catch (err) {
+        console.warn("Error al sincronizar en tiempo real:", err);
+      }
+    }, 250);
+  };
+
+  // 1. Sincronización entre pestañas en el mismo dispositivo
+  const handleStorage = (event: StorageEvent) => {
+    if (
+      event.key &&
+      (event.key.includes("biblioteca_digital_books") ||
+        event.key.includes("biblioteca_digital_cells") ||
+        event.key.includes("biblioteca_digital_shelves") ||
+        event.key.includes("biblioteca_digital_rooms"))
+    ) {
+      triggerReload();
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", handleStorage);
+  }
+
+  // 2. Sincronización en vivo entre cualquier dispositivo (Supabase Realtime)
+  let channel: RealtimeChannel | null = null;
+
+  if (isSupabaseConfigured && supabase) {
+    const channelId = `library-realtime-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    channel = supabase
+      .channel(channelId)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "books" },
+        () => triggerReload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cells" },
+        () => triggerReload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shelves" },
+        () => triggerReload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rooms" },
+        () => triggerReload(),
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.info("⚡ Supabase Realtime activo para sincronización multidispositivo.");
+        }
+      });
+  }
+
+  // Desuscripción limpia
+  return () => {
+    isSubscribed = false;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", handleStorage);
+    }
+    if (channel && supabase) {
+      void supabase.removeChannel(channel);
+    }
   };
 }
 
