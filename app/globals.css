@@ -118,6 +118,45 @@ body {
   background: radial-gradient(circle at 50% 18%, rgba(30, 41, 59, 0.7) 0%, rgba(9, 13, 22, 1) 75%);
 }
 
+/* Nicho empotrado 2.5D en cada compartimento Kallax */
+.kallax-compartment-recess {
+  box-shadow: 
+    inset 0 14px 18px -6px rgba(0, 0, 0, 0.85),
+    inset 0 -4px 8px -2px rgba(0, 0, 0, 0.5),
+    inset 4px 0 8px -2px rgba(0, 0, 0, 0.35),
+    inset -4px 0 8px -2px rgba(0, 0, 0, 0.35);
+}
+
+/* Balda / repisa inferior de madera física Kallax donde descansan los libros */
+.kallax-wood-shelf {
+  background: linear-gradient(to bottom, #2d1b10 0%, #1a0f09 60%, #120a06 100%);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 -2px 5px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Animación de localización elegante para "Ver ubicación" */
+@keyframes kallax-locate-beacon {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.9), inset 0 0 20px rgba(245, 158, 11, 0.6);
+    transform: scale(1);
+  }
+  40% {
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.5), inset 0 0 35px rgba(245, 158, 11, 0.85);
+    transform: scale(1.025);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0), inset 0 0 20px rgba(245, 158, 11, 0.3);
+    transform: scale(1);
+  }
+}
+
+.kallax-locate-beacon {
+  animation: kallax-locate-beacon 1.4s cubic-bezier(0.25, 1, 0.5, 1) 2;
+  z-index: 25 !important;
+}
+
 /* Respeto a accesibilidad y movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
   * {

@@ -71,6 +71,15 @@ export interface LocationBreadcrumbProps {
 export interface SearchBoxProps {
   query: SearchQuery;
   results: SearchHit[];
+  isLoading?: boolean;
+  resolveLocationInfo?: (hit: SearchHit) => {
+    roomName: string;
+    shelfName: string;
+    row: number;
+    column: number;
+    depth: number;
+    position: number;
+  };
   onQueryChange: (query: SearchQuery) => void;
   onSelectHit: (hit: SearchHit) => void;
 }

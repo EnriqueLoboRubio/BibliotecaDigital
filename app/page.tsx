@@ -115,7 +115,24 @@ export default function HomePage() {
     setSearchResults(hits);
   };
 
-  // Selección de resultado de búsqueda
+  // Resolver ubicación física legible (estancia, mueble, coordenadas, profundidad)
+  const resolveLocationInfo = (hit: SearchHit) => {
+    const shelf = catalog.shelves.find((s) => s.id === hit.location.shelfId);
+    const rooms = catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room];
+    const room = rooms.find(
+      (r) => r.shelfIds?.includes(hit.location.shelfId) || (shelf && shelf.roomId === r.id),
+    );
+    return {
+      roomName: room?.name || "Estudio Principal",
+      shelfName: shelf?.name || "Kallax 4x4",
+      row: hit.location.row,
+      column: hit.location.column,
+      depth: hit.location.depth,
+      position: hit.location.position,
+    };
+  };
+
+  // Selección de resultado de búsqueda ("Ver ubicación")
   const handleSelectHit = (hit: SearchHit) => {
     setHighlightedBookId(hit.book.id);
     setSelectedBookId(hit.book.id);
@@ -123,7 +140,7 @@ export default function HomePage() {
     // Conmutar a la habitación que contiene este mueble
     const rooms = catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room];
     const roomWithShelf = rooms.find(
-      (r) => r.shelfIds?.includes(hit.location.shelfId),
+      (r) => r.shelfIds?.includes(hit.location.shelfId) || catalog.shelves.find((s) => s.id === hit.location.shelfId)?.roomId === r.id,
     );
     if (roomWithShelf) {
       setActiveRoomId(roomWithShelf.id);
@@ -132,17 +149,25 @@ export default function HomePage() {
     setActiveShelfId(hit.location.shelfId);
     setViewMode("shelf");
 
-    // Si el libro está en el fondo (depth > 1), abrimos el cubo automáticamente
-    if (hit.location.depth > 1) {
-      const cell = catalog.cells.find(
-        (c) =>
-          c.shelfId === hit.location.shelfId &&
-          c.row === hit.location.row &&
-          c.column === hit.location.column,
-      );
-      if (cell) {
-        setInspectingCell(cell);
+    // 1. Llevar visualmente al usuario hasta el cubo correspondiente con desplazamiento suave
+    setTimeout(() => {
+      const cellElement = document.getElementById(`shelf-cell-${hit.location.row}-${hit.location.column}`);
+      if (cellElement) {
+        cellElement.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+    }, 80);
+
+    // 2. Resaltar el cubo y abrir automáticamente la información de profundidad
+    const cell = catalog.cells.find(
+      (c) =>
+        c.shelfId === hit.location.shelfId &&
+        c.row === hit.location.row &&
+        c.column === hit.location.column,
+    );
+    if (cell) {
+      setTimeout(() => {
+        setInspectingCell(cell);
+      }, 550);
     }
   };
 
@@ -426,6 +451,9 @@ export default function HomePage() {
     ? new Set(activeShelfBooks.map((b) => `${b.location.row}-${b.location.column}`)).size
     : 0;
   const activeShelfTotalCells = activeShelf ? activeShelf.columns * activeShelf.rows : 0;
+  const occupancyPercentage = activeShelfTotalCells > 0
+    ? Math.round((activeShelfOccupiedCells / activeShelfTotalCells) * 100)
+    : 0;
   const roomBooksCount = books.filter((b) =>
     displayedShelves.some((s) => s.id === b.location.shelfId),
   ).length;
@@ -451,68 +479,110 @@ export default function HomePage() {
         }
       />
 
-      <main className="flex-1 w-full max-w-7xl 2xl:max-w-[1550px] mx-auto px-3 sm:px-6 pt-5 pb-2 flex flex-col gap-5 relative">
-        {/* Jerarquía Espacial Inmediata: Comprensión en 2-3 segundos */}
-        <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 z-30 bg-slate-900/40 p-4 sm:p-5 rounded-2xl border border-slate-800/80 backdrop-blur-md">
-          <div className="flex-1 min-w-0">
-            {/* Migas de contexto físico */}
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1.5">
+      <main className="flex-1 w-full max-w-7xl 2xl:max-w-[1550px] mx-auto px-3 sm:px-6 pt-4 pb-2 flex flex-col gap-4 relative">
+        {/* Dashboard de Estado y Navegación Espacial */}
+        <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 z-30 bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-800/80 backdrop-blur-md shadow-xl">
+          <div className="flex-1 min-w-0 space-y-2.5">
+            {/* Jerarquía de migas espaciales */}
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
               <span className="text-amber-400 font-semibold">Biblioteca</span>
               <span className="text-slate-600">›</span>
-              <span className="text-slate-300 font-medium">{activeRoom.name}</span>
-              <span className="text-slate-600">›</span>
-              <span className="text-amber-300/90 font-medium">
-                {viewMode === "room"
-                  ? "Plano de la Estancia"
-                  : activeShelf
-                    ? activeShelf.name
-                    : "Sin muebles"}
-              </span>
+              <span className="text-slate-200 font-medium">{activeRoom.name}</span>
+              {activeShelf && (
+                <>
+                  <span className="text-slate-600">›</span>
+                  <span className="text-amber-300 font-medium">{activeShelf.name}</span>
+                </>
+              )}
             </div>
 
             {/* Título Principal y Estado */}
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex flex-wrap items-center gap-2">
-              <span>
-                {viewMode === "room"
-                  ? `Plano General — ${activeRoom.name}`
-                  : activeShelf
-                    ? activeShelf.name
-                    : "Habitación sin Muebles"}
-              </span>
-            </h1>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex flex-wrap items-center gap-2.5">
+                <span>{activeShelf ? activeShelf.name : activeRoom.name}</span>
+                {books.length === 0 && (
+                  <span className="text-[11px] font-semibold uppercase px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-600/50 shadow-sm">
+                    Listo para catalogar
+                  </span>
+                )}
+              </h1>
 
-            {/* Subtítulo con instrucción clara de qué hacer a continuación */}
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-              {viewMode === "room"
-                ? "Distribución física de muebles en la estancia. Pulsa en cualquiera para enfocarlo."
-                : activeShelf
-                  ? "Haz clic en cualquier cubo para ver sus libros y niveles de profundidad, o busca abajo por título o autor."
-                  : "Esta estancia no tiene estanterías asignadas. Añade un mueble para empezar a colocar libros."}
-            </p>
+              {/* Mensaje de orientación conciso */}
+              <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
+                {books.length === 0
+                  ? "Tu biblioteca física está lista. Haz clic en cualquier compartimento para colocar libros o utiliza los botones de acción para comenzar."
+                  : viewMode === "room"
+                    ? "Distribución espacial de muebles en la estancia. Pulsa en cualquier estantería para enfocarla."
+                    : "Haz clic en cualquier cubo para ver sus libros y niveles de profundidad, o busca abajo por título, autor o ISBN."}
+              </p>
+            </div>
 
-            {/* Métricas clave condensadas */}
+            {/* Métricas clave limpias: Libros, Cubos ocupados, % Ocupación y Botones integrados */}
             {activeShelf && viewMode === "shelf" && (
-              <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-950/50 border border-amber-800/50 text-amber-200 font-medium">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs">
+                {/* Libros */}
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200 shadow-sm">
                   <span>📚</span>
-                  <strong>{activeShelfBooks.length}</strong> {activeShelfBooks.length === 1 ? "libro colocado" : "libros colocados"}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
+                  <strong className="text-white font-semibold">{activeShelfBooks.length}</strong>
+                  <span className="text-slate-400">{activeShelfBooks.length === 1 ? "libro" : "libros"}</span>
+                </div>
+
+                {/* Cubos ocupados */}
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200 shadow-sm">
                   <span>🗄️</span>
-                  <span>{activeShelfOccupiedCells} de {activeShelfTotalCells} cubos ocupados</span>
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1 text-slate-500">
-                  · {roomBooksCount} en {activeRoom.name}
-                </span>
+                  <strong className="text-white font-semibold">{activeShelfOccupiedCells}</strong>
+                  <span className="text-slate-400">de {activeShelfTotalCells} cubos ocupados</span>
+                </div>
+
+                {/* Porcentaje de ocupación con barra de progreso */}
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200 shadow-sm">
+                  <span className="text-slate-400">Ocupación:</span>
+                  <div className="w-16 sm:w-20 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
+                      style={{ width: `${occupancyPercentage}%` }}
+                    />
+                  </div>
+                  <strong className="text-amber-300 font-bold">{occupancyPercentage}%</strong>
+                </div>
+
+                {displayedShelves.length > 1 && (
+                  <span className="hidden xl:inline-flex text-[11px] text-slate-500 items-center gap-1">
+                    · {roomBooksCount} en total en {activeRoom.name}
+                  </span>
+                )}
+
+                {/* Botones de acción integrados directamente en el dashboard */}
+                <div className="flex items-center gap-2 ml-auto sm:ml-0 pt-1 sm:pt-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddLocation(undefined);
+                      setIsAddModalOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-md shadow-amber-950/40 border border-amber-400/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>+ Añadir libro</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLoadSamples}
+                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-slate-700/80 transition-colors"
+                  >
+                    {books.length === 0 ? "Cargar ejemplos" : "Cargar ejemplos"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Buscador de localización espacial */}
+          {/* Buscador de localización espacial con resolución física */}
           <div className="w-full lg:w-96 shrink-0">
             <SearchBox
               query={searchQuery}
               results={searchResults}
+              resolveLocationInfo={resolveLocationInfo}
               onQueryChange={handleQueryChange}
               onSelectHit={handleSelectHit}
             />
@@ -623,46 +693,7 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Estado Vacío / Onboarding guiado (solo si hay muebles pero no libros) */}
-        {displayedShelves.length > 0 && books.length === 0 && (
-          <div className="rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-850/95 to-slate-900/95 border border-amber-500/30 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-2xl backdrop-blur-md z-20">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-white">
-                  Tu biblioteca física está lista para catalogar
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5 max-w-xl">
-                  Selecciona cualquier cubo para colocar libros con la cámara o código ISBN, o carga una colección de ejemplo para explorar.
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleLoadSamples}
-                className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-750 border border-slate-700 transition-colors"
-              >
-                Cargar libros de ejemplo
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAddLocation(undefined);
-                  setIsAddModalOpen(true);
-                }}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-md shadow-amber-950/40 border border-amber-400/30 transition-all"
-              >
-                + Registrar libro
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Cuadro artístico abstracto en la pared */}
         <WallArt />

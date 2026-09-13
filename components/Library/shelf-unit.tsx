@@ -85,6 +85,14 @@ export function ShelfUnit({
     }
   };
 
+  const totalCubes = shelf.columns * shelf.rows;
+  const occupiedCubes = new Set(
+    books
+      .filter((b) => b.location.shelfId === shelf.id)
+      .map((b) => `${b.location.row}-${b.location.column}`),
+  ).size;
+  const occupancyPercent = totalCubes > 0 ? Math.round((occupiedCubes / totalCubes) * 100) : 0;
+
   return (
     <div className="w-full mx-auto flex flex-col items-center">
       {/* Cabecera del Mueble con identificación clara y controles sutiles */}
@@ -147,7 +155,7 @@ export function ShelfUnit({
           <div className="flex items-center gap-1.5 text-xs text-slate-400">
             <span className="text-slate-600">•</span>
             <span>
-              {shelf.columns}×{shelf.rows} cubos ({shelf.columns * shelf.rows} espacios)
+              {shelf.columns}×{shelf.rows} cubos ({totalCubes} espacios)
             </span>
             <span className="text-slate-600">•</span>
             <span className="font-medium text-slate-300">
@@ -211,8 +219,8 @@ export function ShelfUnit({
 
       {/* Estructura física completa del mueble Kallax con repisa superior y marco grueso */}
       <div className="w-full relative">
-        {/* Tapa superior del mueble */}
-        <div className="w-full h-3 sm:h-4 bg-gradient-to-r from-slate-700 via-slate-800 to-slate-700 rounded-t-lg shadow-md border-t border-slate-600/80 relative z-10" />
+        {/* Tapa superior del mueble con bisel */}
+        <div className="w-full h-3 sm:h-4 bg-gradient-to-r from-slate-750 via-slate-800 to-slate-750 rounded-t-xl shadow-md border-t border-slate-600/70 relative z-10" />
 
         {/* Mueble Kallax con sus cuadrículas */}
         <section
@@ -223,14 +231,29 @@ export function ShelfUnit({
               : undefined
           }
           className={`
-            kallax-outer-frame rounded-b-xl border-[6px] sm:border-[10px] md:border-[16px] border-slate-800 bg-[#070b14] p-1.5 sm:p-2.5 md:p-4
+            kallax-outer-frame rounded-b-2xl border-[8px] sm:border-[12px] md:border-[16px] border-[#182030] bg-[#0c121e] p-2 sm:p-3 md:p-4
             transition-all duration-300 relative z-0 overflow-x-auto no-scrollbar
             ${density === "room" ? "cursor-pointer hover:border-slate-700 hover:shadow-2xl" : "shadow-2xl"}
             ${isConfigureMode ? "ring-2 ring-amber-500/60 shadow-amber-500/10" : ""}
           `}
         >
+          {/* Guías sutiles de columnas superiores (1 a 4) */}
           <div
-            className="grid gap-1.5 sm:gap-2.5 md:gap-4"
+            className="grid gap-2 sm:gap-3 md:gap-3.5 mb-1.5 px-0.5 text-center pointer-events-none"
+            style={{
+              gridTemplateColumns: `repeat(${shelf.columns}, minmax(0, 1fr))`,
+              minWidth: shelf.columns >= 4 ? `${shelf.columns * 74}px` : undefined,
+            }}
+          >
+            {Array.from({ length: shelf.columns }, (_, idx) => (
+              <span key={`col-head-${idx + 1}`} className="text-[10px] sm:text-[11px] font-semibold text-slate-500/70 uppercase tracking-wider">
+                Col. {idx + 1}
+              </span>
+            ))}
+          </div>
+
+          <div
+            className="grid gap-2 sm:gap-3 md:gap-3.5"
             style={{
               gridTemplateColumns: `repeat(${shelf.columns}, minmax(0, 1fr))`,
               minWidth: shelf.columns >= 4 ? `${shelf.columns * 74}px` : undefined,
@@ -303,13 +326,48 @@ export function ShelfUnit({
           </div>
         )}
 
+        {/* Barra de Métricas Limpia de la Estantería (Debajo del mueble) */}
+        {density === "detail" && (
+          <div className="w-full mt-3 px-3 py-2.5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shadow-lg text-xs">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Total de libros */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200">
+                <span>📚</span>
+                <span className="font-semibold text-white">{totalBooksInShelf}</span>
+                <span className="text-slate-400">{totalBooksInShelf === 1 ? "libro" : "libros"}</span>
+              </div>
+
+              {/* Cubos ocupados */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200">
+                <span>🗄️</span>
+                <span className="font-semibold text-white">{occupiedCubes}</span>
+                <span className="text-slate-400">de {totalCubes} cubos ocupados</span>
+              </div>
+            </div>
+
+            {/* Porcentaje de ocupación con barra de progreso */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-slate-400">Ocupación:</span>
+              <div className="w-24 sm:w-32 h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/60">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
+                  style={{ width: `${occupancyPercent}%` }}
+                />
+              </div>
+              <span className="font-bold text-amber-300 text-xs">
+                {occupancyPercent}%
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Patas nórdicas inferiores del mueble */}
         {density === "detail" && (
-          <div className="w-full flex justify-between px-8 sm:px-16 relative -mt-1 z-[-1] pointer-events-none">
+          <div className="w-full flex justify-between px-8 sm:px-16 relative mt-1 z-[-1] pointer-events-none">
             {/* Pata izquierda */}
             <div className="flex flex-col items-center">
               <div
-                className="w-4 h-8 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl"
+                className="w-4 h-7 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl"
                 style={{ transform: "skewX(-8deg)" }}
               />
               <div className="w-6 h-1 rounded-full bg-black/80 blur-[2px]" />
@@ -317,20 +375,20 @@ export function ShelfUnit({
 
             {/* Pata intermedia izquierda */}
             <div className="hidden sm:flex flex-col items-center">
-              <div className="w-3.5 h-8 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl" />
+              <div className="w-3.5 h-7 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl" />
               <div className="w-5 h-1 rounded-full bg-black/80 blur-[2px]" />
             </div>
 
             {/* Pata intermedia derecha */}
             <div className="hidden sm:flex flex-col items-center">
-              <div className="w-3.5 h-8 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl" />
+              <div className="w-3.5 h-7 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl" />
               <div className="w-5 h-1 rounded-full bg-black/80 blur-[2px]" />
             </div>
 
             {/* Pata derecha */}
             <div className="flex flex-col items-center">
               <div
-                className="w-4 h-8 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl"
+                className="w-4 h-7 bg-gradient-to-b from-slate-800 to-amber-950 border-r border-l border-slate-900 shadow-xl"
                 style={{ transform: "skewX(8deg)" }}
               />
               <div className="w-6 h-1 rounded-full bg-black/80 blur-[2px]" />
