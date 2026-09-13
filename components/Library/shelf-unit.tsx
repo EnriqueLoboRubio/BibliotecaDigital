@@ -19,7 +19,7 @@ export function ShelfUnit({
   onRenameShelf,
   onToggleCellEnabled,
 }: ShelfUnitProps) {
-  const { canEdit } = useAuth();
+  const { isAdmin } = useAuth();
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(shelf.name);
   const [isConfigureMode, setIsConfigureMode] = useState(false);
@@ -97,7 +97,7 @@ export function ShelfUnit({
               <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase">
                 {shelf.name}
               </h2>
-              {canEdit && onRenameShelf && (
+              {isAdmin && onRenameShelf && (
                 <button
                   type="button"
                   onClick={() => {
@@ -125,9 +125,9 @@ export function ShelfUnit({
           </span>
         </div>
 
-        {/* Acciones de configuración del mueble */}
+        {/* Acciones de configuración del mueble (solo admin) */}
         <div className="flex items-center gap-2">
-          {canEdit && (
+          {isAdmin && (
             <button
               type="button"
               onClick={() => setIsConfigureMode(!isConfigureMode)}
@@ -217,7 +217,7 @@ export function ShelfUnit({
                   isConfigureMode={isConfigureMode}
                   onSelectCell={density === "detail" ? onSelectCell : undefined}
                   onSelectBook={density === "detail" ? onSelectBook : undefined}
-                  onToggleCellEnabled={canEdit ? handleCellToggle : undefined}
+                  onToggleCellEnabled={isAdmin ? handleCellToggle : undefined}
                 />
               ))}
           </div>

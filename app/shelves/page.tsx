@@ -18,7 +18,7 @@ import type { LibraryCatalog } from "@/lib/types";
 import { useAuth } from "@/lib/auth/context";
 
 export default function ShelvesIndexPage() {
-  const { canEdit } = useAuth();
+  const { isAdmin } = useAuth();
   const [catalog, setCatalog] = useState<LibraryCatalog>({
     room: initialRoom,
     shelves: initialShelves,
@@ -48,6 +48,7 @@ export default function ShelvesIndexPage() {
     rows: number,
     disabledCellKeys?: string[],
   ) => {
+    if (!isAdmin) return;
     const { shelf, cells } = createCustomShelf(
       name,
       cols,
@@ -63,7 +64,7 @@ export default function ShelvesIndexPage() {
   };
 
   const handleSaveRename = (shelfId: string) => {
-    if (!renamingName.trim()) {
+    if (!isAdmin || !renamingName.trim()) {
       setRenamingShelfId(null);
       return;
     }
@@ -76,7 +77,7 @@ export default function ShelvesIndexPage() {
   };
 
   const handleDeleteShelf = (shelfId: string) => {
-    if (catalog.shelves.length <= 1) return;
+    if (!isAdmin || catalog.shelves.length <= 1) return;
     deleteCustomShelf(shelfId);
     setCatalog((prev) => {
       const remainingShelves = prev.shelves.filter((s) => s.id !== shelfId);
@@ -111,7 +112,7 @@ export default function ShelvesIndexPage() {
             </p>
           </div>
 
-          {canEdit && (
+          {isAdmin && (
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
@@ -186,7 +187,7 @@ export default function ShelvesIndexPage() {
                       <h2 className="text-xl font-bold text-white group-hover:text-blue-300 transition-colors">
                         {shelf.name}
                       </h2>
-                      {canEdit && (
+                      {isAdmin && (
                         <button
                           type="button"
                           onClick={() => {
@@ -248,7 +249,7 @@ export default function ShelvesIndexPage() {
                     </svg>
                   </Link>
 
-                  {canEdit && catalog.shelves.length > 1 && (
+                  {isAdmin && catalog.shelves.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleDeleteShelf(shelf.id)}
@@ -265,7 +266,7 @@ export default function ShelvesIndexPage() {
         </div>
       </main>
 
-      {isAddModalOpen && (
+      {isAddModalOpen && isAdmin && (
         <AddShelfModal
           roomName={catalog.room.name}
           onClose={() => setIsAddModalOpen(false)}

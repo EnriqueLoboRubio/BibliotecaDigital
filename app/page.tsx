@@ -31,7 +31,7 @@ import { CreateRoomModal, FloorPlant, RoomSelector, WallArt } from "@/components
 import { useAuth } from "@/lib/auth/context";
 
 export default function HomePage() {
-  const { canEdit } = useAuth();
+  const { canEdit, isAdmin } = useAuth();
   const [catalog, setCatalog] = useState<LibraryCatalog>({
     room: initialRoom,
     rooms: [initialRoom],
@@ -146,8 +146,9 @@ export default function HomePage() {
     }
   };
 
-  // Añadir o actualizar profundidad física de un cubo
+  // Añadir o actualizar profundidad física de un cubo (solo admin)
   const handleUpdateCellDepthCount = (cellId: string, newDepthCount: number) => {
+    if (!isAdmin) return;
     startTransition(() => {
       const updatedCells = catalog.cells.map((c) =>
         c.id === cellId ? { ...c, depthCount: newDepthCount } : c,
@@ -161,8 +162,9 @@ export default function HomePage() {
     });
   };
 
-  // Renombrar una estantería existente
+  // Renombrar una estantería existente (solo admin)
   const handleRenameShelf = (shelfId: string, newName: string) => {
+    if (!isAdmin) return;
     startTransition(() => {
       const updatedShelves = updateShelfName(shelfId, newName);
       setCatalog((prev) => ({ ...prev, shelves: updatedShelves }));
@@ -218,8 +220,9 @@ export default function HomePage() {
     });
   };
 
-  // Crear una nueva habitación
+  // Crear una nueva habitación (solo admin)
   const handleCreateRoom = (roomName: string) => {
+    if (!isAdmin) return;
     const newRoom = createRoom(roomName);
     setCatalog((prev) => {
       const existingRooms = prev.rooms && prev.rooms.length > 0 ? prev.rooms : [prev.room];
@@ -231,8 +234,9 @@ export default function HomePage() {
     setActiveRoomId(newRoom.id);
   };
 
-  // Renombrar habitación
+  // Renombrar habitación (solo admin)
   const handleRenameRoom = (roomId: string, newName: string) => {
+    if (!isAdmin) return;
     const updatedRooms = renameRoom(roomId, newName);
     setCatalog((prev) => ({
       ...prev,
@@ -241,8 +245,9 @@ export default function HomePage() {
     }));
   };
 
-  // Eliminar habitación
+  // Eliminar habitación (solo admin)
   const handleDeleteRoom = (roomId: string) => {
+    if (!isAdmin) return;
     const res = deleteRoom(roomId);
     if (res.success && res.remainingRooms && res.remainingRooms.length > 0) {
       const remaining = res.remainingRooms;
@@ -257,13 +262,14 @@ export default function HomePage() {
     }
   };
 
-  // Crear un nuevo mueble personalizado en la habitación activa
+  // Crear un nuevo mueble personalizado en la habitación activa (solo admin)
   const handleCreateCustomShelf = (
     name: string,
     cols: number,
     rows: number,
     disabledCellKeys?: string[],
   ) => {
+    if (!isAdmin) return;
     startTransition(() => {
       const { shelf, cells } = createCustomShelf(
         name,
@@ -291,8 +297,9 @@ export default function HomePage() {
     });
   };
 
-  // Alternar si un cubo es útil o sin uso, con borrado en cascada
+  // Alternar si un cubo es útil o sin uso, con borrado en cascada (solo admin)
   const handleToggleCellEnabled = (cell: ShelfCell, enabled: boolean) => {
+    if (!isAdmin) return;
     startTransition(() => {
       const { updatedCells, updatedBooks } = toggleCellEnabled(
         cell.shelfId,
@@ -338,9 +345,9 @@ export default function HomePage() {
     });
   };
 
-  // Eliminar un mueble personalizado (si hay más de 1)
+  // Eliminar un mueble personalizado (solo admin)
   const handleDeleteShelf = (shelfId: string) => {
-    if (catalog.shelves.length <= 1) return;
+    if (!isAdmin || catalog.shelves.length <= 1) return;
     deleteCustomShelf(shelfId);
     setCatalog((prev) => {
       const remainingShelves = prev.shelves.filter((s) => s.id !== shelfId);
@@ -370,8 +377,9 @@ export default function HomePage() {
     saveBooksToStorage(SAMPLE_BOOKS);
   };
 
-  // Vaciar estantería
+  // Vaciar estantería (solo admin)
   const handleClearBooks = () => {
+    if (!isAdmin) return;
     setBooks([]);
     saveBooksToStorage([]);
     setSelectedBookId(undefined);
@@ -480,7 +488,7 @@ export default function HomePage() {
             activeRoomId={activeRoom.id}
             shelves={catalog.shelves}
             books={books}
-            canEdit={canEdit}
+            isAdmin={isAdmin}
             onSelectRoom={(roomId) => {
               setActiveRoomId(roomId);
               const targetRoom = roomsList.find((r) => r.id === roomId);
@@ -561,7 +569,7 @@ export default function HomePage() {
               )}
             </div>
 
-            {canEdit && (
+            {isAdmin && (
               <button
                 type="button"
                 onClick={() => setIsAddShelfModalOpen(true)}
@@ -640,7 +648,7 @@ export default function HomePage() {
               Aún no hay ningún mueble en <span className="font-semibold text-slate-200">&ldquo;{activeRoom.name}&rdquo;</span>. Añade tu primera estantería para empezar a colocar libros en esta estancia.
             </p>
 
-            {canEdit ? (
+            {isAdmin ? (
               <button
                 type="button"
                 onClick={() => setIsAddShelfModalOpen(true)}
@@ -655,7 +663,7 @@ export default function HomePage() {
               </button>
             ) : (
               <p className="text-xs text-slate-500 italic bg-slate-900/60 px-4 py-2.5 rounded-xl border border-slate-800">
-                Inicia sesión con permisos de edición para añadir muebles a esta estancia.
+                Solo el administrador puede añadir o configurar muebles en esta estancia.
               </p>
             )}
           </section>
@@ -686,11 +694,11 @@ export default function HomePage() {
                 selectedBookId={selectedBookId}
                 onSelectCell={(cell) => setInspectingCell(cell)}
                 onSelectBook={(bookId) => setSelectedBookId(bookId)}
-                onRenameShelf={handleRenameShelf}
-                onToggleCellEnabled={handleToggleCellEnabled}
+                onRenameShelf={isAdmin ? handleRenameShelf : undefined}
+                onToggleCellEnabled={isAdmin ? handleToggleCellEnabled : undefined}
               />
 
-              {canEdit && displayedShelves.length > 1 && (
+              {isAdmin && displayedShelves.length > 1 && (
                 <div className="w-full flex justify-end mt-2">
                   <button
                     type="button"
@@ -734,7 +742,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {canEdit && books.length > 0 && (
+          {isAdmin && books.length > 0 && (
             <button
               type="button"
               onClick={handleClearBooks}
@@ -759,8 +767,8 @@ export default function HomePage() {
           setAddLocation({ row, column, depth });
           setIsAddModalOpen(true);
         }}
-        onUpdateDepthCount={handleUpdateCellDepthCount}
-        onToggleCellEnabled={handleToggleCellEnabled}
+        onUpdateDepthCount={isAdmin ? handleUpdateCellDepthCount : undefined}
+        onToggleCellEnabled={isAdmin ? handleToggleCellEnabled : undefined}
       />
 
       {/* Ficha detallada del libro seleccionado */}
@@ -800,8 +808,8 @@ export default function HomePage() {
         />
       )}
 
-      {/* Modal para añadir un nuevo mueble personalizado */}
-      {isAddShelfModalOpen && (
+      {/* Modal para añadir un nuevo mueble personalizado (solo admin) */}
+      {isAddShelfModalOpen && isAdmin && (
         <AddShelfModal
           roomName={activeRoom.name}
           onClose={() => setIsAddShelfModalOpen(false)}
@@ -809,9 +817,9 @@ export default function HomePage() {
         />
       )}
 
-      {/* Modal para crear una nueva habitación */}
+      {/* Modal para crear una nueva habitación (solo admin) */}
       <CreateRoomModal
-        isOpen={isCreateRoomModalOpen}
+        isOpen={isCreateRoomModalOpen && isAdmin}
         onClose={() => setIsCreateRoomModalOpen(false)}
         onCreateRoom={handleCreateRoom}
       />

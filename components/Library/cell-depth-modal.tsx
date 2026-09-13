@@ -29,7 +29,7 @@ export function CellDepthModal({
   onUpdateDepthCount,
   onToggleCellEnabled,
 }: CellDepthModalProps) {
-  const { canEdit } = useAuth();
+  const { canEdit, isAdmin } = useAuth();
   const [showConfirmDisable, setShowConfirmDisable] = useState(false);
 
   if (!cell) return null;
@@ -93,7 +93,7 @@ export function CellDepthModal({
                 Actualmente no admite libros. Si lo activas como útil, podrás colocar libros tanto al frente como en profundidad.
               </p>
             </div>
-            {canEdit && onToggleCellEnabled && (
+            {isAdmin && onToggleCellEnabled && (
               <button
                 type="button"
                 onClick={() => {
@@ -233,7 +233,7 @@ export function CellDepthModal({
             <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-950/80 border border-emerald-800/80 text-emerald-300">
               ✓ Útil
             </span>
-            {canEdit && onToggleCellEnabled && !showConfirmDisable && (
+            {isAdmin && onToggleCellEnabled && !showConfirmDisable && (
               <button
                 type="button"
                 onClick={handleStartDisable}
@@ -245,7 +245,7 @@ export function CellDepthModal({
             )}
           </div>
 
-          {canEdit && onUpdateDepthCount && (
+          {isAdmin && onUpdateDepthCount && (
             <div className="flex items-center gap-2">
               <button
                 type="button"

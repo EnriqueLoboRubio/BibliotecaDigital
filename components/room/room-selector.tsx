@@ -8,7 +8,7 @@ interface RoomSelectorProps {
   activeRoomId: string;
   shelves: Shelf[];
   books: Book[];
-  canEdit: boolean;
+  isAdmin?: boolean;
   onSelectRoom: (roomId: string) => void;
   onOpenCreateModal: () => void;
   onRenameRoom?: (roomId: string, newName: string) => void;
@@ -20,7 +20,7 @@ export function RoomSelector({
   activeRoomId,
   shelves,
   books,
-  canEdit,
+  isAdmin = false,
   onSelectRoom,
   onOpenCreateModal,
   onRenameRoom,
@@ -140,8 +140,8 @@ export function RoomSelector({
                   )}
                 </button>
 
-                {/* Acciones de gestión de la habitación (si está autenticado) */}
-                {canEdit && (
+                {/* Acciones de gestión de la habitación (solo administrador) */}
+                {isAdmin && (
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center pr-1.5 gap-0.5">
                     <button
                       type="button"
@@ -174,8 +174,8 @@ export function RoomSelector({
           })}
         </div>
 
-        {/* Botón para añadir nueva estancia */}
-        {canEdit && (
+        {/* Botón para añadir nueva estancia (solo administrador) */}
+        {isAdmin && (
           <button
             type="button"
             onClick={onOpenCreateModal}

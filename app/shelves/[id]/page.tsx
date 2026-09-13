@@ -27,7 +27,7 @@ export default function ShelfDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { canEdit } = useAuth();
+  const { canEdit, isAdmin } = useAuth();
   const resolvedParams = use(params);
   const shelfId = resolvedParams.id;
 
@@ -70,6 +70,7 @@ export default function ShelfDetailPage({
     : null;
 
   const handleUpdateCellDepthCount = (cellId: string, newDepthCount: number) => {
+    if (!isAdmin) return;
     const updatedCells = catalog.cells.map((c) =>
       c.id === cellId ? { ...c, depthCount: newDepthCount } : c,
     );
@@ -118,6 +119,7 @@ export default function ShelfDetailPage({
   };
 
   const handleRenameShelf = (targetShelfId: string, newName: string) => {
+    if (!isAdmin) return;
     const updated = updateShelfName(targetShelfId, newName);
     setCatalog((prev) => ({
       ...prev,
@@ -126,6 +128,7 @@ export default function ShelfDetailPage({
   };
 
   const handleToggleCellEnabled = (cell: ShelfCell, enabled: boolean) => {
+    if (!isAdmin) return;
     const { updatedCells, updatedBooks } = toggleCellEnabled(
       cell.shelfId,
       cell.row,
@@ -205,8 +208,8 @@ export default function ShelfDetailPage({
             selectedBookId={selectedBookId}
             onSelectCell={(cell) => setInspectingCell(cell)}
             onSelectBook={(bookId) => setSelectedBookId(bookId)}
-            onRenameShelf={handleRenameShelf}
-            onToggleCellEnabled={handleToggleCellEnabled}
+            onRenameShelf={isAdmin ? handleRenameShelf : undefined}
+            onToggleCellEnabled={isAdmin ? handleToggleCellEnabled : undefined}
           />
         </section>
       </main>
@@ -222,8 +225,8 @@ export default function ShelfDetailPage({
           setAddLocation({ row, column, depth });
           setIsAddModalOpen(true);
         }}
-        onUpdateDepthCount={handleUpdateCellDepthCount}
-        onToggleCellEnabled={handleToggleCellEnabled}
+        onUpdateDepthCount={isAdmin ? handleUpdateCellDepthCount : undefined}
+        onToggleCellEnabled={isAdmin ? handleToggleCellEnabled : undefined}
       />
 
       {selectedBook && selectedBookLocation && (
