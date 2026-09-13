@@ -376,12 +376,14 @@ export function toggleCellEnabled(
   enabled: boolean,
 ): { updatedCells: ShelfCell[]; updatedBooks: Book[]; deletedBookCount: number } {
   const cells = getStoredCells();
-  const updatedCells = cells.map((cell) => {
-    if (cell.shelfId === shelfId && cell.row === row && cell.column === column) {
-      return { ...cell, enabled };
-    }
-    return cell;
-  });
+  const updatedCells = cells
+    .map((cell) => {
+      if (cell.shelfId === shelfId && cell.row === row && cell.column === column) {
+        return { ...cell, enabled };
+      }
+      return cell;
+    })
+    .sort((a, b) => (a.row !== b.row ? a.row - b.row : a.column - b.column));
   saveCellsToStorage(updatedCells);
 
   let books = getStoredBooks();
@@ -490,7 +492,11 @@ export async function getCatalog(): Promise<LibraryCatalog> {
       const [roomsRes, shelvesRes, cellsRes, booksRes] = await Promise.all([
         supabase.from("rooms").select("*"),
         supabase.from("shelves").select("*").order("position", { ascending: true }),
-        supabase.from("cells").select("*"),
+        supabase
+          .from("cells")
+          .select("*")
+          .order("row", { ascending: true })
+          .order("columna", { ascending: true }),
         supabase.from("books").select("*"),
       ]);
 
@@ -507,15 +513,17 @@ export async function getCatalog(): Promise<LibraryCatalog> {
           columns: s.columns,
           rows: s.rows,
         }));
-        let cells: ShelfCell[] = (cellsRes.data || []).map((c) => ({
-          id: c.id,
-          shelfId: c.shelf_id,
-          row: c.row,
-          column: c.columna ?? c.column,
-          enabled: c.enabled,
-          depthCount: c.depth_count,
-          photo: c.photo || undefined,
-        }));
+        let cells: ShelfCell[] = (cellsRes.data || [])
+          .map((c) => ({
+            id: c.id,
+            shelfId: c.shelf_id,
+            row: c.row,
+            column: c.columna ?? c.column,
+            enabled: c.enabled,
+            depthCount: c.depth_count,
+            photo: c.photo || undefined,
+          }))
+          .sort((a, b) => (a.row !== b.row ? a.row - b.row : a.column - b.column));
         const books: Book[] = (booksRes.data || []).map((b) => ({
           id: b.id,
           title: b.title,
@@ -592,7 +600,9 @@ export async function getCatalog(): Promise<LibraryCatalog> {
 
   // Respaldo local
   const books = getStoredBooks();
-  const cells = getStoredCells();
+  const cells = getStoredCells().sort((a, b) =>
+    a.row !== b.row ? a.row - b.row : a.column - b.column,
+  );
   const shelves = getStoredShelves();
   const rooms = getStoredRooms();
 

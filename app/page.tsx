@@ -25,8 +25,10 @@ import { AppHeader } from "@/components/chrome";
 import { SearchBox } from "@/components/Search";
 import { BookDetail, AddBookModal, EditBookModal } from "@/components/book";
 import { FloorPlant, WallArt } from "@/components/room/room-decorations";
+import { useAuth } from "@/lib/auth/context";
 
 export default function HomePage() {
+  const { canEdit } = useAuth();
   const [catalog, setCatalog] = useState<LibraryCatalog>({
     room: initialRoom,
     shelves: initialShelves,
@@ -322,10 +324,14 @@ export default function HomePage() {
       <AppHeader
         title="Biblioteca Digital"
         bookCount={books.length}
-        onAddBook={() => {
-          setAddLocation(undefined);
-          setIsAddModalOpen(true);
-        }}
+        onAddBook={
+          canEdit
+            ? () => {
+                setAddLocation(undefined);
+                setIsAddModalOpen(true);
+              }
+            : undefined
+        }
       />
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-2 flex flex-col gap-6 relative">
@@ -413,16 +419,18 @@ export default function HomePage() {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsAddShelfModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/70 border border-emerald-700/60 shadow-md transition-all flex items-center gap-1.5 shrink-0"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>+ Nuevo Mueble</span>
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setIsAddShelfModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/70 border border-emerald-700/60 shadow-md transition-all flex items-center gap-1.5 shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>+ Nuevo Mueble</span>
+            </button>
+          )}
         </section>
 
         {/* Estado Vacío / Onboarding guiado */}
@@ -501,7 +509,7 @@ export default function HomePage() {
                 onToggleCellEnabled={handleToggleCellEnabled}
               />
 
-              {catalog.shelves.length > 1 && (
+              {canEdit && catalog.shelves.length > 1 && (
                 <div className="w-full flex justify-end mt-2">
                   <button
                     type="button"
@@ -545,7 +553,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {books.length > 0 && (
+          {canEdit && books.length > 0 && (
             <button
               type="button"
               onClick={handleClearBooks}

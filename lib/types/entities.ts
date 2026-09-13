@@ -39,3 +39,19 @@ export interface Book {
   cover?: string;
   location: BookLocation;
 }
+
+export type UserRole = "admin" | "editor";
+
+export interface AppUser {
+  id: string;
+  username: string;
+  name: string;
+  role: UserRole;
+  passwordHash: string;
+  createdAt: string;
+}
+
+export interface AuthSession {
+  user: Omit<AppUser, "passwordHash">;
+  token: string;
+}

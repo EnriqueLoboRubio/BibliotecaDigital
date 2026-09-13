@@ -14,10 +14,12 @@ import {
   subscribeToLibraryChanges,
   updateBook,
 } from "@/lib/data";
+import { useAuth } from "@/lib/auth/context";
 import { resolveLocation } from "@/lib/selectors";
 import type { Book, LibraryCatalog, ShelfCell } from "@/lib/types";
 
 export default function BooksIndexPage() {
+  const { canEdit } = useAuth();
   const [catalog, setCatalog] = useState<LibraryCatalog>({
     room: initialRoom,
     shelves: initialShelves,
@@ -187,14 +189,16 @@ export default function BooksIndexPage() {
 
                       <td className="px-4 py-3.5 text-right">
                         <div className="inline-flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setEditingBook(book)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-colors"
-                            title="Editar libro y ubicación"
-                          >
-                            <span>✏️ Editar</span>
-                          </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingBook(book)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-colors"
+                              title="Editar libro y ubicación"
+                            >
+                              <span>✏️ Editar</span>
+                            </button>
+                          )}
 
                           <Link
                             href={`/?book=${book.id}`}
@@ -216,7 +220,7 @@ export default function BooksIndexPage() {
         )}
       </main>
 
-      {editingBook && (
+      {canEdit && editingBook && (
         <EditBookModal
           book={editingBook}
           shelves={catalog.shelves}

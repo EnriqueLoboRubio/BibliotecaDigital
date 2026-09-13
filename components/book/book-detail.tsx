@@ -1,5 +1,6 @@
 import type { BookDetailProps } from "@/lib/types";
 import { LocationBreadcrumb } from "./location-breadcrumb";
+import { useAuth } from "@/lib/auth/context";
 
 export function BookDetail({
   book,
@@ -8,6 +9,7 @@ export function BookDetail({
   onShowInShelf,
   onEditBook,
 }: BookDetailProps) {
+  const { canEdit } = useAuth();
   const isBehind = location.depth > 1;
 
   return (
@@ -108,7 +110,7 @@ export function BookDetail({
         {/* Acciones */}
         <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-800">
           <div>
-            {onEditBook && (
+            {canEdit && onEditBook && (
               <button
                 type="button"
                 onClick={() => onEditBook(book)}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Book, Shelf, ShelfCell } from "@/lib/types";
 import { booksAtDepth, depthLabel } from "@/lib/selectors";
 import { BookSpine } from "./book-spine";
+import { useAuth } from "@/lib/auth/context";
 
 interface CellDepthModalProps {
   cell: ShelfCell | null;
@@ -28,6 +29,7 @@ export function CellDepthModal({
   onUpdateDepthCount,
   onToggleCellEnabled,
 }: CellDepthModalProps) {
+  const { canEdit } = useAuth();
   const [showConfirmDisable, setShowConfirmDisable] = useState(false);
 
   if (!cell) return null;
@@ -91,7 +93,7 @@ export function CellDepthModal({
                 Actualmente no admite libros. Si lo activas como útil, podrás colocar libros tanto al frente como en profundidad.
               </p>
             </div>
-            {onToggleCellEnabled && (
+            {canEdit && onToggleCellEnabled && (
               <button
                 type="button"
                 onClick={() => {
@@ -231,7 +233,7 @@ export function CellDepthModal({
             <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-950/80 border border-emerald-800/80 text-emerald-300">
               ✓ Útil
             </span>
-            {onToggleCellEnabled && !showConfirmDisable && (
+            {canEdit && onToggleCellEnabled && !showConfirmDisable && (
               <button
                 type="button"
                 onClick={handleStartDisable}
@@ -243,7 +245,7 @@ export function CellDepthModal({
             )}
           </div>
 
-          {onUpdateDepthCount && (
+          {canEdit && onUpdateDepthCount && (
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -303,7 +305,7 @@ export function CellDepthModal({
                     </span>
                   </div>
 
-                  {onAddBookToCell && (
+                  {canEdit && onAddBookToCell && (
                     <button
                       type="button"
                       onClick={() => onAddBookToCell(cell.row, cell.column, d)}

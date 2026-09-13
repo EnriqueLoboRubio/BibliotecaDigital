@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ShelfCell, ShelfUnitProps } from "@/lib/types";
 import { ShelfCellView } from "./shelf-cell";
 import { ShelfDecorations } from "../room/room-decorations";
+import { useAuth } from "@/lib/auth/context";
 
 export function ShelfUnit({
   shelf,
@@ -18,6 +19,7 @@ export function ShelfUnit({
   onRenameShelf,
   onToggleCellEnabled,
 }: ShelfUnitProps) {
+  const { canEdit } = useAuth();
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(shelf.name);
   const [isConfigureMode, setIsConfigureMode] = useState(false);
@@ -95,7 +97,7 @@ export function ShelfUnit({
               <h2 className="text-sm font-semibold tracking-wide text-slate-200 uppercase">
                 {shelf.name}
               </h2>
-              {onRenameShelf && (
+              {canEdit && onRenameShelf && (
                 <button
                   type="button"
                   onClick={() => {
@@ -120,7 +122,7 @@ export function ShelfUnit({
         </div>
 
         <div className="flex items-center gap-2 text-xs text-slate-400 self-end sm:self-auto">
-          {density === "detail" && onToggleCellEnabled && (
+          {canEdit && density === "detail" && onToggleCellEnabled && (
             <button
               type="button"
               onClick={() => setIsConfigureMode(!isConfigureMode)}
@@ -192,19 +194,21 @@ export function ShelfUnit({
               gridTemplateColumns: `repeat(${shelf.columns}, minmax(0, 1fr))`,
             }}
           >
-            {cells.map((cell) => (
-              <ShelfCellView
-                key={cell.id}
-                cell={cell}
-                books={books}
-                highlightedBookId={highlightedBookId}
-                selectedBookId={selectedBookId}
-                isConfigureMode={isConfigureMode}
-                onSelectCell={density === "detail" ? onSelectCell : undefined}
-                onSelectBook={density === "detail" ? onSelectBook : undefined}
-                onToggleCellEnabled={handleCellToggle}
-              />
-            ))}
+            {[...cells]
+              .sort((a, b) => (a.row !== b.row ? a.row - b.row : a.column - b.column))
+              .map((cell) => (
+                <ShelfCellView
+                  key={cell.id}
+                  cell={cell}
+                  books={books}
+                  highlightedBookId={highlightedBookId}
+                  selectedBookId={selectedBookId}
+                  isConfigureMode={isConfigureMode}
+                  onSelectCell={density === "detail" ? onSelectCell : undefined}
+                  onSelectBook={density === "detail" ? onSelectBook : undefined}
+                  onToggleCellEnabled={canEdit ? handleCellToggle : undefined}
+                />
+              ))}
           </div>
         </section>
 

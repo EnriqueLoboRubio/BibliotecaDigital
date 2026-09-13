@@ -20,12 +20,14 @@ import {
 } from "@/lib/data";
 import { resolveLocation } from "@/lib/selectors";
 import type { Book, LibraryCatalog, ShelfCell } from "@/lib/types";
+import { useAuth } from "@/lib/auth/context";
 
 export default function ShelfDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { canEdit } = useAuth();
   const resolvedParams = use(params);
   const shelfId = resolvedParams.id;
 
@@ -158,10 +160,14 @@ export default function ShelfDetailPage({
       <AppHeader
         title={`Biblioteca Digital — ${shelf.name}`}
         bookCount={books.length}
-        onAddBook={() => {
-          setAddLocation(undefined);
-          setIsAddModalOpen(true);
-        }}
+        onAddBook={
+          canEdit
+            ? () => {
+                setAddLocation(undefined);
+                setIsAddModalOpen(true);
+              }
+            : undefined
+        }
       />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 flex flex-col gap-6">

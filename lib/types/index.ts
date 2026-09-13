@@ -1,5 +1,5 @@
 export type { BookLocation, ResolvedLocation } from "./location";
-export type { Book, Room, Shelf, ShelfCell } from "./entities";
+export type { AppUser, AuthSession, Book, Room, Shelf, ShelfCell, UserRole } from "./entities";
 export type { LibraryCatalog } from "./catalog";
 export type { SearchHit, SearchQuery } from "./search";
 export type {

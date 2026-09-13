@@ -15,8 +15,10 @@ import {
   updateShelfName,
 } from "@/lib/data";
 import type { LibraryCatalog } from "@/lib/types";
+import { useAuth } from "@/lib/auth/context";
 
 export default function ShelvesIndexPage() {
+  const { canEdit } = useAuth();
   const [catalog, setCatalog] = useState<LibraryCatalog>({
     room: initialRoom,
     shelves: initialShelves,
@@ -109,16 +111,18 @@ export default function ShelvesIndexPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 self-start sm:self-auto"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>+ Añadir Mueble Personalizado</span>
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 self-start sm:self-auto"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>+ Añadir Mueble Personalizado</span>
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
@@ -182,17 +186,19 @@ export default function ShelvesIndexPage() {
                       <h2 className="text-xl font-bold text-white group-hover:text-blue-300 transition-colors">
                         {shelf.name}
                       </h2>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRenamingShelfId(shelf.id);
-                          setRenamingName(shelf.name);
-                        }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-xs transition-colors"
-                        title="Renombrar este mueble"
-                      >
-                        ✏️
-                      </button>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRenamingShelfId(shelf.id);
+                            setRenamingName(shelf.name);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-xs transition-colors"
+                          title="Renombrar este mueble"
+                        >
+                          ✏️
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -242,7 +248,7 @@ export default function ShelvesIndexPage() {
                     </svg>
                   </Link>
 
-                  {catalog.shelves.length > 1 && (
+                  {canEdit && catalog.shelves.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleDeleteShelf(shelf.id)}

@@ -55,24 +55,37 @@ CREATE TABLE IF NOT EXISTS public.books (
   UNIQUE (shelf_id, row, columna, depth, position)
 );
 
--- 5. ÍNDICES DE RENDIMIENTO
+-- 5. TABLA: app_users (Usuarios y roles de la aplicación)
+CREATE TABLE IF NOT EXISTS public.app_users (
+  id TEXT PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'editor')),
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- 6. ÍNDICES DE RENDIMIENTO
 CREATE INDEX IF NOT EXISTS idx_cells_shelf_id ON public.cells(shelf_id);
 CREATE INDEX IF NOT EXISTS idx_books_shelf_id ON public.books(shelf_id);
 CREATE INDEX IF NOT EXISTS idx_books_spatial ON public.books(shelf_id, row, columna, depth);
+CREATE INDEX IF NOT EXISTS idx_app_users_username ON public.app_users(username);
 
--- 6. POLÍTICAS DE SEGURIDAD (RLS - Row Level Security)
+-- 7. POLÍTICAS DE SEGURIDAD (RLS - Row Level Security)
 ALTER TABLE public.rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shelves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cells ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_users ENABLE ROW LEVEL SECURITY;
 
 -- Permitir lectura y escritura con la clave anónima pública (anon key)
 CREATE POLICY "Permitir todo a anon en rooms" ON public.rooms FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a anon en shelves" ON public.shelves FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a anon en cells" ON public.cells FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Permitir todo a anon en books" ON public.books FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir todo a anon en app_users" ON public.app_users FOR ALL USING (true) WITH CHECK (true);
 
--- 7. HABILITAR REALTIME (Sincronización en vivo multidispositivo)
+-- 8. HABILITAR REALTIME (Sincronización en vivo multidispositivo)
 -- Permite que los cambios se envíen instantáneamente a móviles y ordenadores vía WebSockets
 DO $$
 BEGIN
@@ -81,5 +94,12 @@ BEGIN
     WHERE pubname = 'supabase_realtime' AND tablename = 'books'
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.books, public.cells, public.shelves, public.rooms;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'app_users'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.app_users;
   END IF;
 END $$;
