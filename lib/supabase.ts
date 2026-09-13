@@ -14,13 +14,27 @@ function cleanEnvValue(val: string | undefined): string {
 }
 
 function getCleanSupabaseUrl(): string {
-  let url = cleanEnvValue(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const raw =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    "";
+  let url = cleanEnvValue(raw);
   url = url.replace(/\/rest\/v1\/?$/, "");
   return url;
 }
 
+function getCleanSupabaseAnonKey(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    "";
+  return cleanEnvValue(raw);
+}
+
 const supabaseUrl = getCleanSupabaseUrl();
-const supabaseAnonKey = cleanEnvValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const supabaseAnonKey = getCleanSupabaseAnonKey();
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -36,7 +50,7 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
 if (typeof window !== "undefined") {
   if (!isSupabaseConfigured) {
     console.warn(
-      "[Supabase] ⚠️ Sin conexión en la nube. Las variables NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY no están configuradas en esta versión. Se usará el almacenamiento local.",
+      "[Supabase] ⚠️ Sin conexión en la nube. Las variables de Supabase no están disponibles en esta compilación. Se usará el almacenamiento local.",
     );
   } else {
     console.info("[Supabase] 🟢 Conectado exitosamente en:", supabaseUrl);
