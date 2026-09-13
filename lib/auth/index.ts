@@ -101,18 +101,42 @@ export async function getUsers(): Promise<AppUser[]> {
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.from("app_users").select("*");
-      if (!error && Array.isArray(data) && data.length > 0) {
-        users = data.map((u) => ({
-          id: u.id,
-          username: u.username,
-          name: u.name,
-          role: u.role as UserRole,
-          passwordHash: u.password_hash,
-          password: u.password_text || (u.username === "admin" ? "admin123" : ""),
-          createdAt: u.created_at,
-        }));
-        saveLocalUsers(users);
-        return users;
+      if (!error && Array.isArray(data)) {
+        if (data.length > 0) {
+          users = data.map((u) => ({
+            id: u.id,
+            username: u.username,
+            name: u.name,
+            role: u.role as UserRole,
+            passwordHash: u.password_hash,
+            password: u.password_text || (u.username === "admin" ? "admin123" : ""),
+            createdAt: u.created_at,
+          }));
+
+          // Sincronizar usuarios locales que no existan todavía en Supabase
+          const local = getLocalUsers();
+          const missingInSupabase = local.filter(
+            (lu) => !users.some((su) => su.username.toLowerCase() === lu.username.toLowerCase())
+          );
+          if (missingInSupabase.length > 0) {
+            for (const mu of missingInSupabase) {
+              void syncUserToSupabase(mu);
+              users.push(mu);
+            }
+          }
+
+          saveLocalUsers(users);
+          return users;
+        } else {
+          // La tabla existe pero está vacía: sincronizar usuarios locales a Supabase
+          const local = getLocalUsers();
+          if (local.length > 0) {
+            for (const u of local) {
+              void syncUserToSupabase(u);
+            }
+            return local;
+          }
+        }
       }
     } catch {
       // Continuar con respaldo local
