@@ -13,6 +13,7 @@ export interface Shelf {
   position: number;
   columns: number;
   rows: number;
+  roomId?: string;
 }
 
 /** Un cubo del mueble. Sustituye a ShelfRow. */

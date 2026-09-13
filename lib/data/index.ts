@@ -168,18 +168,25 @@ export function saveRoomsToStorage(rooms: Room[]): void {
   }
 }
 
-// Sincronización asíncrona no bloqueante con Supabase
+// Sincronización asíncrona secuencial con Supabase
 async function syncShelfToSupabase(shelf: Shelf, cells: ShelfCell[], rooms: Room[]) {
   if (!isSupabaseConfigured || !supabase) return;
   try {
+    // 1. Guardar primero el mueble y esperar a que esté confirmado para que la clave foránea en cells exista
+    const { error: shelfErr } = await supabase.from("shelves").upsert({
+      id: shelf.id,
+      name: shelf.name,
+      position: shelf.position,
+      columns: shelf.columns,
+      rows: shelf.rows,
+    });
+    if (shelfErr) {
+      console.error("Error al guardar estantería en Supabase:", shelfErr);
+      return;
+    }
+
+    // 2. Guardar las celdas y habitaciones una vez que el mueble ya está comprometido
     await Promise.all([
-      supabase.from("shelves").upsert({
-        id: shelf.id,
-        name: shelf.name,
-        position: shelf.position,
-        columns: shelf.columns,
-        rows: shelf.rows,
-      }),
       supabase.from("cells").upsert(
         cells.map((c) => ({
           id: c.id,
@@ -319,6 +326,7 @@ export function createCustomShelf(
     position: newPosition,
     columns: Math.max(1, Math.min(columns, 8)),
     rows: Math.max(1, Math.min(rows, 8)),
+    roomId: roomId,
   };
 
   const disabledSet = new Set(disabledCellKeys ? Array.from(disabledCellKeys) : []);
@@ -350,18 +358,103 @@ export function createCustomShelf(
 
   // Actualizar room
   const rooms = getStoredRooms();
-  const targetRoom = rooms.find((rm) => rm.id === roomId) || rooms[0];
-  const updatedRooms = rooms.map((rm) =>
-    rm.id === targetRoom.id
-      ? { ...rm, shelfIds: Array.from(new Set([...rm.shelfIds, shelfId])) }
-      : rm,
-  );
+  const targetRoom = rooms.find((rm) => rm.id === roomId) || rooms[0] || initialRoom;
+  const updatedRooms = rooms.some((rm) => rm.id === targetRoom.id)
+    ? rooms.map((rm) =>
+        rm.id === targetRoom.id
+          ? { ...rm, shelfIds: Array.from(new Set([...rm.shelfIds, shelfId])) }
+          : rm,
+      )
+    : [...rooms, { ...targetRoom, shelfIds: [shelfId] }];
   saveRoomsToStorage(updatedRooms);
 
   // Sincronizar en la nube
-  syncShelfToSupabase(newShelf, newCells, updatedRooms);
+  void syncShelfToSupabase(newShelf, newCells, updatedRooms);
 
   return { shelf: newShelf, cells: newCells };
+}
+
+/**
+ * Crea una nueva habitación
+ */
+export function createRoom(name: string): Room {
+  const cleanName = name.trim() || "Nueva Estancia";
+  const roomId = `room-${Date.now().toString(36)}`;
+  const newRoom: Room = {
+    id: roomId,
+    name: cleanName,
+    shelfIds: [],
+  };
+
+  const existingRooms = getStoredRooms();
+  const updatedRooms = [...existingRooms, newRoom];
+  saveRoomsToStorage(updatedRooms);
+
+  if (isSupabaseConfigured && supabase) {
+    void supabase.from("rooms").upsert({
+      id: newRoom.id,
+      name: newRoom.name,
+      shelf_ids: newRoom.shelfIds,
+    });
+  }
+
+  return newRoom;
+}
+
+/**
+ * Renombra una habitación existente
+ */
+export function renameRoom(roomId: string, newName: string): Room[] {
+  const cleanName = newName.trim();
+  const rooms = getStoredRooms();
+  const updatedRooms = rooms.map((r) =>
+    r.id === roomId ? { ...r, name: cleanName || r.name } : r,
+  );
+  saveRoomsToStorage(updatedRooms);
+
+  if (isSupabaseConfigured && supabase) {
+    void supabase
+      .from("rooms")
+      .update({ name: cleanName })
+      .eq("id", roomId);
+  }
+
+  return updatedRooms;
+}
+
+/**
+ * Elimina una habitación (No se permite si es la única restante)
+ */
+export function deleteRoom(roomId: string): { success: boolean; error?: string; remainingRooms?: Room[] } {
+  const rooms = getStoredRooms();
+  if (rooms.length <= 1) {
+    return { success: false, error: "No se puede eliminar la única habitación existente." };
+  }
+
+  const targetRoom = rooms.find((r) => r.id === roomId);
+  if (!targetRoom) {
+    return { success: false, error: "La habitación no existe." };
+  }
+
+  const updatedRooms = rooms.filter((r) => r.id !== roomId);
+  const destinationRoom = updatedRooms[0];
+  const combinedShelfIds = Array.from(new Set([...destinationRoom.shelfIds, ...targetRoom.shelfIds]));
+  destinationRoom.shelfIds = combinedShelfIds;
+
+  saveRoomsToStorage(updatedRooms);
+
+  if (isSupabaseConfigured && supabase) {
+    void Promise.all([
+      supabase.from("rooms").delete().eq("id", roomId),
+      supabase.from("rooms").upsert({
+        id: destinationRoom.id,
+        name: destinationRoom.name,
+        shelf_ids: destinationRoom.shelfIds,
+      }),
+    ]);
+  }
+
+  return { success: true, remainingRooms: updatedRooms };
 }
 
 /**
@@ -574,6 +667,41 @@ export async function getCatalog(): Promise<LibraryCatalog> {
           cells = initialCells;
         }
 
+        // Auto-reparación de celdas faltantes en cualquier estantería
+        const missingCellsShelves = shelves.filter(
+          (s) => !cells.some((c) => c.shelfId === s.id),
+        );
+        if (missingCellsShelves.length > 0) {
+          const generatedCells: ShelfCell[] = [];
+          for (const s of missingCellsShelves) {
+            for (let r = 1; r <= s.rows; r++) {
+              for (let c = 1; c <= s.columns; c++) {
+                generatedCells.push({
+                  id: `cell-${s.id}-${r}-${c}`,
+                  shelfId: s.id,
+                  row: r,
+                  column: c,
+                  enabled: true,
+                  depthCount: 2,
+                });
+              }
+            }
+          }
+          cells = [...cells, ...generatedCells];
+          if (isSupabaseConfigured && supabase) {
+            void supabase.from("cells").upsert(
+              generatedCells.map((c) => ({
+                id: c.id,
+                shelf_id: c.shelfId,
+                row: c.row,
+                columna: c.column,
+                enabled: c.enabled,
+                depth_count: c.depthCount,
+              })),
+            );
+          }
+        }
+
         // Cache local
         if (typeof window !== "undefined") {
           try {
@@ -588,6 +716,7 @@ export async function getCatalog(): Promise<LibraryCatalog> {
 
         return {
           room: rooms[0] || initialRoom,
+          rooms: rooms.length > 0 ? rooms : [initialRoom],
           shelves,
           cells,
           books,
@@ -600,14 +729,40 @@ export async function getCatalog(): Promise<LibraryCatalog> {
 
   // Respaldo local
   const books = getStoredBooks();
-  const cells = getStoredCells().sort((a, b) =>
+  const rawCells = getStoredCells().sort((a, b) =>
     a.row !== b.row ? a.row - b.row : a.column - b.column,
   );
   const shelves = getStoredShelves();
   const rooms = getStoredRooms();
 
+  // Auto-reparación local de celdas faltantes
+  const missingCellsShelves = shelves.filter(
+    (s) => !rawCells.some((c) => c.shelfId === s.id),
+  );
+  let cells = rawCells;
+  if (missingCellsShelves.length > 0) {
+    const generatedCells: ShelfCell[] = [];
+    for (const s of missingCellsShelves) {
+      for (let r = 1; r <= s.rows; r++) {
+        for (let c = 1; c <= s.columns; c++) {
+          generatedCells.push({
+            id: `cell-${s.id}-${r}-${c}`,
+            shelfId: s.id,
+            row: r,
+            column: c,
+            enabled: true,
+            depthCount: 2,
+          });
+        }
+      }
+    }
+    cells = [...rawCells, ...generatedCells];
+    saveCellsToStorage(cells);
+  }
+
   return {
     room: rooms[0] || initialRoom,
+    rooms: rooms.length > 0 ? rooms : [initialRoom],
     shelves,
     cells,
     books,

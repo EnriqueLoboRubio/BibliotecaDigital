@@ -4,12 +4,15 @@ import { useEffect, useState, useTransition } from "react";
 import type { Book, LibraryCatalog, SearchHit, SearchQuery, ShelfCell } from "@/lib/types";
 import {
   createCustomShelf,
+  createRoom,
   deleteCustomShelf,
   deleteBook,
+  deleteRoom,
   getCatalog,
   initialCells,
   initialRoom,
   initialShelves,
+  renameRoom,
   SAMPLE_BOOKS,
   saveBooksToStorage,
   saveCellsToStorage,
@@ -24,18 +27,20 @@ import { ShelfUnit, RoomPlan, CellDepthModal, AddShelfModal } from "@/components
 import { AppHeader } from "@/components/chrome";
 import { SearchBox } from "@/components/Search";
 import { BookDetail, AddBookModal, EditBookModal } from "@/components/book";
-import { FloorPlant, WallArt } from "@/components/room/room-decorations";
+import { CreateRoomModal, FloorPlant, RoomSelector, WallArt } from "@/components/room";
 import { useAuth } from "@/lib/auth/context";
 
 export default function HomePage() {
   const { canEdit } = useAuth();
   const [catalog, setCatalog] = useState<LibraryCatalog>({
     room: initialRoom,
+    rooms: [initialRoom],
     shelves: initialShelves,
     cells: initialCells,
     books: [],
   });
 
+  const [activeRoomId, setActiveRoomId] = useState<string>("room-1");
   const [activeShelfId, setActiveShelfId] = useState<string>("shelf-A");
   const [viewMode, setViewMode] = useState<"shelf" | "room">("shelf");
   const [books, setBooks] = useState<Book[]>([]);
@@ -46,6 +51,7 @@ export default function HomePage() {
   const [inspectingCell, setInspectingCell] = useState<ShelfCell | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddShelfModalOpen, setIsAddShelfModalOpen] = useState(false);
+  const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [addLocation, setAddLocation] = useState<{ row: number; column: number; depth: number } | undefined>();
   const [, startTransition] = useTransition();
@@ -55,6 +61,9 @@ export default function HomePage() {
     getCatalog().then((data) => {
       setCatalog(data);
       setBooks(data.books);
+      if (data.rooms && data.rooms.length > 0) {
+        setActiveRoomId(data.rooms[0].id);
+      }
       if (data.shelves.length > 0) {
         setActiveShelfId(data.shelves[0].id);
       }
@@ -110,6 +119,16 @@ export default function HomePage() {
   const handleSelectHit = (hit: SearchHit) => {
     setHighlightedBookId(hit.book.id);
     setSelectedBookId(hit.book.id);
+
+    // Conmutar a la habitación que contiene este mueble
+    const rooms = catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room];
+    const roomWithShelf = rooms.find(
+      (r) => r.shelfIds?.includes(hit.location.shelfId),
+    );
+    if (roomWithShelf) {
+      setActiveRoomId(roomWithShelf.id);
+    }
+
     setActiveShelfId(hit.location.shelfId);
     setViewMode("shelf");
 
@@ -199,7 +218,46 @@ export default function HomePage() {
     });
   };
 
-  // Crear un nuevo mueble personalizado con cubos útiles/desactivados
+  // Crear una nueva habitación
+  const handleCreateRoom = (roomName: string) => {
+    const newRoom = createRoom(roomName);
+    setCatalog((prev) => {
+      const existingRooms = prev.rooms && prev.rooms.length > 0 ? prev.rooms : [prev.room];
+      return {
+        ...prev,
+        rooms: [...existingRooms, newRoom],
+      };
+    });
+    setActiveRoomId(newRoom.id);
+  };
+
+  // Renombrar habitación
+  const handleRenameRoom = (roomId: string, newName: string) => {
+    const updatedRooms = renameRoom(roomId, newName);
+    setCatalog((prev) => ({
+      ...prev,
+      rooms: updatedRooms,
+      room: prev.room.id === roomId ? { ...prev.room, name: newName } : prev.room,
+    }));
+  };
+
+  // Eliminar habitación
+  const handleDeleteRoom = (roomId: string) => {
+    const res = deleteRoom(roomId);
+    if (res.success && res.remainingRooms && res.remainingRooms.length > 0) {
+      const remaining = res.remainingRooms;
+      setCatalog((prev) => ({
+        ...prev,
+        rooms: remaining,
+        room: remaining[0],
+      }));
+      if (activeRoomId === roomId) {
+        setActiveRoomId(remaining[0].id);
+      }
+    }
+  };
+
+  // Crear un nuevo mueble personalizado en la habitación activa
   const handleCreateCustomShelf = (
     name: string,
     cols: number,
@@ -211,14 +269,23 @@ export default function HomePage() {
         name,
         cols,
         rows,
-        catalog.room.id,
+        activeRoom.id,
         disabledCellKeys,
       );
-      setCatalog((prev) => ({
-        ...prev,
-        shelves: [...prev.shelves, shelf],
-        cells: [...prev.cells, ...cells],
-      }));
+      setCatalog((prev) => {
+        const existingRooms = prev.rooms && prev.rooms.length > 0 ? prev.rooms : [prev.room];
+        const updatedRooms = existingRooms.map((r) =>
+          r.id === activeRoom.id
+            ? { ...r, shelfIds: Array.from(new Set([...(r.shelfIds || []), shelf.id])) }
+            : r,
+        );
+        return {
+          ...prev,
+          rooms: updatedRooms,
+          shelves: [...prev.shelves, shelf],
+          cells: [...prev.cells, ...cells],
+        };
+      });
       setActiveShelfId(shelf.id);
       setViewMode("shelf");
     });
@@ -279,15 +346,22 @@ export default function HomePage() {
       const remainingShelves = prev.shelves.filter((s) => s.id !== shelfId);
       const remainingCells = prev.cells.filter((c) => c.shelfId !== shelfId);
       const remainingBooks = prev.books.filter((b) => b.location.shelfId !== shelfId);
+      const existingRooms = prev.rooms && prev.rooms.length > 0 ? prev.rooms : [prev.room];
+      const updatedRooms = existingRooms.map((r) => ({
+        ...r,
+        shelfIds: (r.shelfIds || []).filter((id) => id !== shelfId),
+      }));
       return {
         ...prev,
+        rooms: updatedRooms,
         shelves: remainingShelves,
         cells: remainingCells,
         books: remainingBooks,
       };
     });
     setBooks((prev) => prev.filter((b) => b.location.shelfId !== shelfId));
-    setActiveShelfId(catalog.shelves.find((s) => s.id !== shelfId)?.id || "shelf-A");
+    const nextShelf = displayedShelves.find((s) => s.id !== shelfId) || catalog.shelves.find((s) => s.id !== shelfId);
+    setActiveShelfId(nextShelf?.id || "shelf-A");
   };
 
   // Cargar libros de demostración
@@ -304,8 +378,16 @@ export default function HomePage() {
     setHighlightedBookId(undefined);
   };
 
+  // Resolución de habitaciones y muebles
+  const roomsList = catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room || initialRoom];
+  const activeRoom = roomsList.find((r) => r.id === activeRoomId) || roomsList[0];
+  const activeRoomShelves = catalog.shelves.filter(
+    (s) => activeRoom.shelfIds?.includes(s.id) || s.roomId === activeRoom.id,
+  );
+  const displayedShelves = activeRoomShelves.length > 0 ? activeRoomShelves : catalog.shelves;
   const activeShelf =
-    catalog.shelves.find((s) => s.id === activeShelfId) ||
+    displayedShelves.find((s) => s.id === activeShelfId) ||
+    displayedShelves[0] ||
     catalog.shelves[0] ||
     initialShelves[0];
 
@@ -371,40 +453,72 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Selector de Muebles por Habitación y botón para añadir más */}
+        {/* Selector de Habitación / Estancia */}
+        <section className="w-full z-30">
+          <RoomSelector
+            rooms={roomsList}
+            activeRoomId={activeRoom.id}
+            shelves={catalog.shelves}
+            books={books}
+            canEdit={canEdit}
+            onSelectRoom={(roomId) => {
+              setActiveRoomId(roomId);
+              const targetRoom = roomsList.find((r) => r.id === roomId);
+              if (targetRoom) {
+                const targetShelves = catalog.shelves.filter(
+                  (s) => targetRoom.shelfIds?.includes(s.id) || s.roomId === targetRoom.id,
+                );
+                if (targetShelves.length > 0) {
+                  setActiveShelfId(targetShelves[0].id);
+                }
+              }
+            }}
+            onOpenCreateModal={() => setIsCreateRoomModalOpen(true)}
+            onRenameRoom={handleRenameRoom}
+            onDeleteRoom={handleDeleteRoom}
+          />
+        </section>
+
+        {/* Selector de Muebles de la Habitación Activa y botón para añadir más */}
         <section className="w-full flex items-center justify-between gap-3 overflow-x-auto pb-1 z-20">
           <div className="flex items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 shadow-md">
-            {catalog.shelves.map((shelf) => {
-              const isActive = viewMode === "shelf" && activeShelfId === shelf.id;
-              const count = books.filter((b) => b.location.shelfId === shelf.id).length;
-              return (
-                <button
-                  key={shelf.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveShelfId(shelf.id);
-                    setViewMode("shelf");
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
-                    isActive
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
-                  }`}
-                >
-                  <span>{shelf.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-black/30 rounded-full font-mono">
-                    {shelf.columns}×{shelf.rows}
-                  </span>
-                  {count > 0 && (
-                    <span className="text-[10px] font-bold text-emerald-400">
-                      • {count}
+            {displayedShelves.length === 0 ? (
+              <span className="text-xs text-slate-400 py-1 px-3 italic">
+                No hay muebles en esta estancia todavía.
+              </span>
+            ) : (
+              displayedShelves.map((shelf) => {
+                const isActive = viewMode === "shelf" && activeShelfId === shelf.id;
+                const count = books.filter((b) => b.location.shelfId === shelf.id).length;
+                return (
+                  <button
+                    key={shelf.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveShelfId(shelf.id);
+                      setViewMode("shelf");
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                      isActive
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>{shelf.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 bg-black/30 rounded-full font-mono">
+                      {shelf.columns}×{shelf.rows}
                     </span>
-                  )}
-                </button>
-              );
-            })}
+                    {count > 0 && (
+                      <span className="text-[10px] font-bold text-emerald-400">
+                        • {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
 
-            {catalog.shelves.length > 1 && (
+            {displayedShelves.length > 1 && (
               <button
                 type="button"
                 onClick={() => setViewMode("room")}
@@ -414,7 +528,7 @@ export default function HomePage() {
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
                 }`}
               >
-                <span>Plano Completo</span>
+                <span>Plano de la Estancia</span>
               </button>
             )}
           </div>
@@ -622,11 +736,18 @@ export default function HomePage() {
       {/* Modal para añadir un nuevo mueble personalizado */}
       {isAddShelfModalOpen && (
         <AddShelfModal
-          roomName={catalog.room.name}
+          roomName={activeRoom.name}
           onClose={() => setIsAddShelfModalOpen(false)}
           onCreateShelf={handleCreateCustomShelf}
         />
       )}
+
+      {/* Modal para crear una nueva habitación */}
+      <CreateRoomModal
+        isOpen={isCreateRoomModalOpen}
+        onClose={() => setIsCreateRoomModalOpen(false)}
+        onCreateRoom={handleCreateRoom}
+      />
     </div>
   );
 }
