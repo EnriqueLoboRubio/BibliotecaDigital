@@ -207,6 +207,7 @@ export default function ShelfDetailPage({
             books={books}
             density="detail"
             selectedBookId={selectedBookId}
+            selectedCellId={inspectingCell?.id}
             onSelectCell={(cell) => setInspectingCell(cell)}
             onSelectBook={(bookId) => setSelectedBookId(bookId)}
             onRenameShelf={isAdmin ? handleRenameShelf : undefined}

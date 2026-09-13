@@ -731,6 +731,7 @@ export default function HomePage() {
                 density="detail"
                 highlightedBookId={highlightedBookId}
                 selectedBookId={selectedBookId}
+                selectedCellId={inspectingCell?.id}
                 onSelectCell={(cell) => setInspectingCell(cell)}
                 onSelectBook={(bookId) => setSelectedBookId(bookId)}
                 onRenameShelf={isAdmin ? handleRenameShelf : undefined}
@@ -765,11 +766,11 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center gap-4 text-xs text-amber-200/80">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm bg-[#0e1626] border border-slate-700 inline-block" />
-              <span>Espacio útil</span>
+              <span>Disponible</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm pattern-disabled border border-slate-800 inline-block" />
-              <span>Sin uso físico</span>
+              <span>No disponible</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm bg-amber-950 border border-amber-600 inline-block" />

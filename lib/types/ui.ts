@@ -20,6 +20,7 @@ export interface ShelfUnitProps {
   density: ShelfDensity;
   highlightedBookId?: string;
   selectedBookId?: string;
+  selectedCellId?: string;
   onSelectShelf?: (shelfId: string) => void;
   onSelectCell?: (cell: ShelfCell) => void;
   onSelectBook?: (bookId: string) => void;
@@ -35,6 +36,8 @@ export interface ShelfCellProps {
   depth?: number;
   highlightedBookId?: string;
   selectedBookId?: string;
+  selectedCellId?: string;
+  isSelected?: boolean;
   isConfigureMode?: boolean;
   onSelectCell?: (cell: ShelfCell) => void;
   onSelectBook?: (bookId: string) => void;

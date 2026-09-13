@@ -13,6 +13,7 @@ export function ShelfUnit({
   density,
   highlightedBookId,
   selectedBookId,
+  selectedCellId,
   onSelectShelf,
   onSelectCell,
   onSelectBook,
@@ -24,6 +25,33 @@ export function ShelfUnit({
   const [nameInput, setNameInput] = useState(shelf.name);
   const [isConfigureMode, setIsConfigureMode] = useState(false);
   const [cellToDisable, setCellToDisable] = useState<{ cell: ShelfCell; count: number } | null>(null);
+
+  const isCellSelected = (cell: ShelfCell) => {
+    if (selectedCellId && selectedCellId === cell.id) return true;
+    if (selectedBookId) {
+      const b = books.find((book) => book.id === selectedBookId);
+      if (
+        b &&
+        b.location.shelfId === cell.shelfId &&
+        b.location.row === cell.row &&
+        b.location.column === cell.column
+      ) {
+        return true;
+      }
+    }
+    if (highlightedBookId) {
+      const b = books.find((book) => book.id === highlightedBookId);
+      if (
+        b &&
+        b.location.shelfId === cell.shelfId &&
+        b.location.row === cell.row &&
+        b.location.column === cell.column
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   const label = `${shelf.name}, ${shelf.columns} por ${shelf.rows}`;
   const totalBooksInShelf = books.filter(
@@ -165,7 +193,7 @@ export function ShelfUnit({
           <div className="flex items-center gap-2">
             <span className="text-base">⚙️</span>
             <span>
-              <strong>Modo configuración de cubos:</strong> Haz clic en cualquier cubo para activarlo (Útil) o desactivarlo (Sin uso). Si desactivas un cubo con libros, se eliminarán.
+              <strong>Modo configuración de cubos:</strong> Haz clic en cualquier cubo para habilitarlo (Disponible) o deshabilitarlo (No disponible). Si desactivas un cubo con libros, se eliminarán.
             </span>
           </div>
           <button
@@ -217,6 +245,8 @@ export function ShelfUnit({
                   books={books}
                   highlightedBookId={highlightedBookId}
                   selectedBookId={selectedBookId}
+                  selectedCellId={selectedCellId}
+                  isSelected={isCellSelected(cell)}
                   isConfigureMode={isConfigureMode}
                   onSelectCell={density === "detail" ? onSelectCell : undefined}
                   onSelectBook={density === "detail" ? onSelectBook : undefined}
@@ -245,7 +275,7 @@ export function ShelfUnit({
                     ¿Desactivar Cubo {cellToDisable.cell.row}×{cellToDisable.cell.column}?
                   </h3>
                   <p className="text-xs text-red-300/90 mt-1 leading-relaxed">
-                    Este cubo contiene <strong>{cellToDisable.count} {cellToDisable.count === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>Sin uso</em>, todos los libros en su interior serán <strong>eliminados permanentemente</strong>.
+                    Este cubo contiene <strong>{cellToDisable.count} {cellToDisable.count === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>No disponible</em>, todos los libros en su interior serán <strong>eliminados permanentemente</strong>.
                   </p>
                 </div>
               </div>

@@ -57,16 +57,17 @@ export function CellDepthModal({
         >
           <div className="flex items-start justify-between border-b border-slate-800 pb-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                  Fila {cell.row} · Columna {cell.column}
-                </span>
-                <span className="text-xs text-slate-400 font-mono">
+              <div className="flex items-center gap-2 mb-1.5 text-xs">
+                <span className="font-semibold text-amber-400">
                   {shelf.name}
                 </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-slate-300 font-medium">
+                  Fila {cell.row}, Columna {cell.column}
+                </span>
               </div>
-              <h2 id="cell-modal-title" className="text-xl font-bold text-white">
-                Cubo {cell.row}×{cell.column} — Sin uso físico
+              <h2 id="cell-modal-title" className="text-xl font-bold text-white tracking-tight">
+                Cubo Fila {cell.row} · Columna {cell.column} — No disponible
               </h2>
             </div>
             <button
@@ -82,15 +83,15 @@ export function CellDepthModal({
           </div>
 
           <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 pattern-disabled flex flex-col items-center text-center gap-3 py-6">
-            <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
+            <div className="w-12 h-12 rounded-full bg-slate-850 border border-slate-700 flex items-center justify-center text-slate-400">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">Este cubo está configurado como sin uso</h3>
+              <h3 className="text-sm font-semibold text-white">Este cubo está configurado como no disponible</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                Actualmente no admite libros. Si lo activas como útil, podrás colocar libros tanto al frente como en profundidad.
+                Actualmente no admite libros. Si lo habilitas, podrás colocar libros tanto al frente como en profundidad.
               </p>
             </div>
             {isAdmin && onToggleCellEnabled && (
@@ -105,7 +106,7 @@ export function CellDepthModal({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Activar este cubo (marcar como útil)</span>
+                <span>Habilitar este cubo (marcar como disponible)</span>
               </button>
             )}
           </div>
@@ -205,7 +206,7 @@ export function CellDepthModal({
                   ¿Desactivar este cubo y eliminar sus libros?
                 </h4>
                 <p className="text-xs text-red-300/90 mt-1 leading-relaxed">
-                  Este cubo contiene <strong>{cellBooks.length} {cellBooks.length === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>Sin uso</em>, todos los libros en su interior serán <strong>eliminados permanentemente</strong> de la biblioteca física.
+                  Este cubo contiene <strong>{cellBooks.length} {cellBooks.length === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>No disponible</em>, todos los libros en su interior serán <strong>eliminados permanentemente</strong> de la biblioteca física.
                 </p>
               </div>
             </div>
@@ -240,9 +241,9 @@ export function CellDepthModal({
                 type="button"
                 onClick={handleStartDisable}
                 className="text-xs text-slate-400 hover:text-red-400 hover:underline transition-colors ml-1"
-                title="Desactivar cubo (marcar sin uso)"
+                title="Desactivar cubo (marcar no disponible)"
               >
-                (Marcar como sin uso)
+                (Marcar como no disponible)
               </button>
             )}
           </div>
