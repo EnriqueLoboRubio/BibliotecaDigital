@@ -334,7 +334,7 @@ export default function HomePage() {
         }
       />
 
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-2 flex flex-col gap-6 relative">
+      <main className="flex-1 w-full max-w-7xl 2xl:max-w-[1550px] mx-auto px-3 sm:px-6 pt-6 pb-2 flex flex-col gap-6 relative">
         {/* Barra superior de localización espacial y buscador combobox */}
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4 z-30">
           <div className="w-full sm:w-auto">
@@ -495,7 +495,7 @@ export default function HomePage() {
         ) : (
           <section className="relative flex flex-col md:flex-row items-center md:items-end justify-center gap-4 lg:gap-8 pt-2 pb-0">
             {/* Mueble Kallax activo centrado con repisa superior y patas */}
-            <div className="w-full max-w-3xl flex-1 z-10">
+            <div className="w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl flex-1 z-10">
               <ShelfUnit
                 shelf={activeShelf}
                 cells={activeShelfCells}

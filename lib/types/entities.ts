@@ -48,10 +48,11 @@ export interface AppUser {
   name: string;
   role: UserRole;
   passwordHash: string;
+  password?: string;
   createdAt: string;
 }
 
 export interface AuthSession {
-  user: Omit<AppUser, "passwordHash">;
+  user: Omit<AppUser, "passwordHash" | "password">;
   token: string;
 }

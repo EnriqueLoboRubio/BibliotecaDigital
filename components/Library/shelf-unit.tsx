@@ -58,7 +58,7 @@ export function ShelfUnit({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+    <div className="w-full mx-auto flex flex-col items-center">
       {/* Etiqueta / Información superior con opción de renombrar */}
       <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 px-2">
         <div className="flex items-center gap-2">
@@ -119,34 +119,44 @@ export function ShelfUnit({
           <span className="text-xs text-slate-400 font-mono">
             ({shelf.columns}×{shelf.rows} cubos)
           </span>
+
+          <span className="text-xs text-slate-400 font-mono">
+            · {totalBooksInShelf} {totalBooksInShelf === 1 ? "libro" : "libros"}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-400 self-end sm:self-auto">
-          {canEdit && density === "detail" && onToggleCellEnabled && (
+        {/* Acciones de configuración del mueble */}
+        <div className="flex items-center gap-2">
+          {canEdit && (
             <button
               type="button"
               onClick={() => setIsConfigureMode(!isConfigureMode)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                 isConfigureMode
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-md shadow-amber-500/20"
-                  : "bg-slate-900/90 text-slate-300 hover:text-white border-slate-700/80 hover:bg-slate-800"
+                  ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
+                  : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700"
               }`}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>{isConfigureMode ? "Listo" : "Editar cubos"}</span>
+              <span>{isConfigureMode ? "✓ Listo" : "⚙️ Editar cubos"}</span>
             </button>
           )}
 
-          <span className="bg-slate-900/90 px-3 py-1 rounded-full border border-slate-700/80 font-medium shadow-sm">
-            {totalBooksInShelf} {totalBooksInShelf === 1 ? "libro" : "libros"} colocados
-          </span>
+          {density === "room" && onSelectShelf && (
+            <button
+              type="button"
+              onClick={() => onSelectShelf(shelf.id)}
+              className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium flex items-center gap-1"
+            >
+              <span>Ver detalle</span>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Aviso informativo en modo configuración de cubos */}
+      {/* Banner explicativo al estar en modo configuración */}
       {isConfigureMode && (
         <div className="w-full mb-3 p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs text-amber-200 flex items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-2">
@@ -170,8 +180,8 @@ export function ShelfUnit({
 
       {/* Estructura física completa del mueble Kallax con repisa superior y marco grueso */}
       <div className="w-full relative">
-        {/* Tapa superior del mueble (tablero voladizo) */}
-        <div className="w-[101.5%] -ml-[0.75%] h-3.5 bg-gradient-to-r from-slate-700 via-slate-800 to-slate-700 rounded-t-md shadow-md border-t border-slate-600/80 relative z-10" />
+        {/* Tapa superior del mueble */}
+        <div className="w-full h-3 sm:h-4 bg-gradient-to-r from-slate-700 via-slate-800 to-slate-700 rounded-t-lg shadow-md border-t border-slate-600/80 relative z-10" />
 
         {/* Mueble Kallax con sus cuadrículas */}
         <section
@@ -182,16 +192,17 @@ export function ShelfUnit({
               : undefined
           }
           className={`
-            kallax-outer-frame rounded-b-xl border-[10px] md:border-[16px] border-slate-800 bg-[#070b14] p-2 md:p-3
-            transition-all duration-300 relative z-0
+            kallax-outer-frame rounded-b-xl border-[6px] sm:border-[10px] md:border-[16px] border-slate-800 bg-[#070b14] p-1.5 sm:p-2.5 md:p-4
+            transition-all duration-300 relative z-0 overflow-x-auto no-scrollbar
             ${density === "room" ? "cursor-pointer hover:border-slate-700 hover:shadow-2xl" : "shadow-2xl"}
             ${isConfigureMode ? "ring-2 ring-amber-500/60 shadow-amber-500/10" : ""}
           `}
         >
           <div
-            className="grid gap-2 md:gap-3"
+            className="grid gap-1.5 sm:gap-2.5 md:gap-4"
             style={{
               gridTemplateColumns: `repeat(${shelf.columns}, minmax(0, 1fr))`,
+              minWidth: shelf.columns >= 4 ? `${shelf.columns * 74}px` : undefined,
             }}
           >
             {[...cells]

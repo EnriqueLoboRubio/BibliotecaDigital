@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS public.app_users (
   name TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('admin', 'editor')),
   password_hash TEXT NOT NULL,
+  password_text TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 

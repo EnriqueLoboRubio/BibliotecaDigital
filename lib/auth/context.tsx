@@ -9,6 +9,8 @@ import {
   getUsers,
   login as authLogin,
   logout as authLogout,
+  subscribeToUsers,
+  updateUserPassword,
 } from "./index";
 
 interface AuthContextType {
@@ -22,6 +24,7 @@ interface AuthContextType {
   logout: () => void;
   createUser: (params: { username: string; name: string; password: string; role: UserRole }) => Promise<{ success: boolean; error?: string }>;
   removeUser: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (targetUserId: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   refreshUsers: () => Promise<void>;
 }
 
@@ -51,20 +54,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    const handleAuthChange = () => {
+    // Suscripción en tiempo real a cambios de usuarios (Supabase + LocalStorage)
+    const unsubscribeRealtime = subscribeToUsers((freshUsers) => {
       if (mounted) {
+        setUsers(freshUsers);
         setSession(getActiveSession());
-        void refreshUsers();
       }
-    };
-
-    window.addEventListener("library_auth_change", handleAuthChange);
-    window.addEventListener("storage", handleAuthChange);
+    });
 
     return () => {
       mounted = false;
-      window.removeEventListener("library_auth_change", handleAuthChange);
-      window.removeEventListener("storage", handleAuthChange);
+      unsubscribeRealtime();
     };
   }, []);
 
@@ -104,6 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res;
   };
 
+  const updatePassword = async (targetUserId: string, newPassword: string) => {
+    if (!session?.user) {
+      return { success: false, error: "Debes iniciar sesión como administrador." };
+    }
+    const res = await updateUserPassword(session.user, targetUserId, newPassword);
+    if (res.success) {
+      await refreshUsers();
+      setSession(getActiveSession());
+    }
+    return res;
+  };
+
   const user = session?.user || null;
   const isAuthenticated = Boolean(user);
   const isAdmin = user?.role === "admin";
@@ -122,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         createUser,
         removeUser,
+        updatePassword,
         refreshUsers,
       }}
     >

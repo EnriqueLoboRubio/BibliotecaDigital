@@ -18,11 +18,12 @@ function getSpineStyle(id: string) {
     hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   }
   const color = SPINE_PALETTE[hash % SPINE_PALETTE.length];
-  // Variación sutil de altura entre 82% y 96%
-  const heightPercent = 82 + (hash % 15);
-  // Ancho del lomo entre 20px y 30px
-  const widthPx = 20 + ((hash >> 4) % 11);
-  return { color, heightPercent, widthPx };
+  // Variación sutil de altura entre 84% y 98%
+  const heightPercent = 84 + (hash % 14);
+  // Ancho para móvil (16px a 22px) y PC (26px a 38px)
+  const mobileWidth = 16 + ((hash >> 4) % 7);
+  const desktopWidth = 26 + ((hash >> 4) % 13);
+  return { color, heightPercent, mobileWidth, desktopWidth };
 }
 
 export function BookSpine({
@@ -33,7 +34,7 @@ export function BookSpine({
   locationLabel,
   onSelect,
 }: BookSpineProps) {
-  const { color, heightPercent, widthPx } = getSpineStyle(book.id);
+  const { color, heightPercent, mobileWidth, desktopWidth } = getSpineStyle(book.id);
 
   const state = [
     selected ? "seleccionado" : null,
@@ -49,11 +50,15 @@ export function BookSpine({
       aria-label={`${book.title}, ${book.author}, ${locationLabel}${state ? `, ${state}` : ""}`}
       aria-pressed={selected}
       onClick={() => onSelect?.(book.id)}
-      style={{
-        height: `${heightPercent}%`,
-        width: `${widthPx}px`,
-      }}
+      style={
+        {
+          height: `${heightPercent}%`,
+          "--spine-mob-w": `${mobileWidth}px`,
+          "--spine-desk-w": `${desktopWidth}px`,
+        } as React.CSSProperties
+      }
       className={`
+        w-[var(--spine-mob-w)] sm:w-[var(--spine-desk-w)]
         relative group flex flex-col justify-between items-center rounded-sm transition-all duration-200
         cursor-pointer shrink-0 select-none book-spine-shadow border-r border-l ${color.bg} ${color.border}
         ${dimmed ? "opacity-25 grayscale hover:opacity-75 hover:grayscale-0" : "opacity-100"}
@@ -62,16 +67,16 @@ export function BookSpine({
       `}
     >
       {/* Detalle de costilla superior del lomo */}
-      <div className={`w-full h-1.5 border-t border-b ${color.accent} mt-1`} />
+      <div className={`w-full h-1 sm:h-1.5 border-t border-b ${color.accent} mt-0.5 sm:mt-1`} />
 
       {/* Título en vertical */}
-      <div className="flex-1 overflow-hidden flex items-center justify-center py-1">
+      <div className="flex-1 overflow-hidden flex items-center justify-center py-0.5 sm:py-1 px-0.5">
         <span
-          className={`text-[9px] font-medium leading-none tracking-tight ${color.text} whitespace-nowrap overflow-hidden text-ellipsis`}
+          className={`text-[8px] sm:text-[10px] md:text-[11px] font-semibold leading-tight tracking-tight ${color.text} whitespace-nowrap overflow-hidden text-ellipsis`}
           style={{
             writingMode: "vertical-rl",
             transform: "rotate(180deg)",
-            maxHeight: "90%",
+            maxHeight: "94%",
           }}
         >
           {book.title}
@@ -79,7 +84,7 @@ export function BookSpine({
       </div>
 
       {/* Detalle de costilla inferior */}
-      <div className={`w-full h-1 border-t border-b ${color.accent} mb-1`} />
+      <div className={`w-full h-1 border-t border-b ${color.accent} mb-0.5 sm:mb-1`} />
 
       {/* Tooltip con información rápida */}
       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center px-2 py-1 bg-slate-950/95 text-slate-100 text-[10px] rounded shadow-xl whitespace-nowrap z-30 pointer-events-none border border-slate-700">

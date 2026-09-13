@@ -31,7 +31,7 @@ export function RoomPlan({
             <div
               key={shelf.id}
               onClick={() => onSelectShelf(shelf.id)}
-              className="w-full flex flex-col items-center group cursor-pointer p-4 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all shadow-xl"
+              className="w-full flex flex-col items-center group cursor-pointer p-2 sm:p-4 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all shadow-xl"
             >
               <div className="w-full flex items-center justify-between mb-3 px-2">
                 <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">

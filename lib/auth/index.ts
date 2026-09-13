@@ -1,5 +1,6 @@
 import type { AppUser, AuthSession, UserRole } from "@/lib/types";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 const STORAGE_USERS_KEY = "biblioteca_digital_users_v1";
 const STORAGE_SESSION_KEY = "biblioteca_digital_session_v1";
@@ -70,6 +71,7 @@ async function syncUserToSupabase(user: AppUser) {
       name: user.name,
       role: user.role,
       password_hash: user.passwordHash,
+      password_text: user.password || "",
       created_at: user.createdAt,
     });
   } catch (err) {
@@ -106,6 +108,7 @@ export async function getUsers(): Promise<AppUser[]> {
           name: u.name,
           role: u.role as UserRole,
           passwordHash: u.password_hash,
+          password: u.password_text || (u.username === "admin" ? "admin123" : ""),
           createdAt: u.created_at,
         }));
         saveLocalUsers(users);
@@ -127,6 +130,7 @@ export async function getUsers(): Promise<AppUser[]> {
       name: "Administrador",
       role: "admin",
       passwordHash: adminHash,
+      password: "admin123",
       createdAt: new Date().toISOString(),
     };
     users = [initialAdmin];
@@ -237,12 +241,16 @@ export async function createNewUser(
     name: params.name.trim() || cleanUsername,
     role: params.role,
     passwordHash: hash,
+    password: params.password,
     createdAt: new Date().toISOString(),
   };
 
   const nextUsers = [...users, newUser];
   saveLocalUsers(nextUsers);
   void syncUserToSupabase(newUser);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("library_auth_change"));
+  }
 
   return { success: true, user: newUser };
 }
@@ -277,6 +285,137 @@ export async function deleteUser(
   const nextUsers = users.filter((u) => u.id !== targetUserId);
   saveLocalUsers(nextUsers);
   void syncDeleteUserFromSupabase(targetUserId);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("library_auth_change"));
+  }
 
   return { success: true };
+}
+
+/**
+ * Modifica la contraseña de un usuario existente (Permitido para administradores)
+ */
+export async function updateUserPassword(
+  currentUser: { id: string; role: UserRole },
+  targetUserId: string,
+  newPassword: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (currentUser.role !== "admin") {
+    return { success: false, error: "Solo los administradores pueden modificar contraseñas." };
+  }
+
+  if (!newPassword || newPassword.length < 4) {
+    return { success: false, error: "La nueva contraseña debe tener al menos 4 caracteres." };
+  }
+
+  const users = await getUsers();
+  const targetIndex = users.findIndex((u) => u.id === targetUserId);
+  if (targetIndex === -1) {
+    return { success: false, error: "El usuario no existe." };
+  }
+
+  const newHash = await hashPassword(newPassword);
+  const updatedUser: AppUser = {
+    ...users[targetIndex],
+    passwordHash: newHash,
+    password: newPassword,
+  };
+
+  const nextUsers = [...users];
+  nextUsers[targetIndex] = updatedUser;
+  saveLocalUsers(nextUsers);
+  void syncUserToSupabase(updatedUser);
+
+  // Si el usuario objetivo es el usuario activo actual, actualizar la sesión
+  const active = getActiveSession();
+  if (active && active.user.id === targetUserId) {
+    const updatedSession: AuthSession = {
+      ...active,
+      user: {
+        ...active.user,
+        name: updatedUser.name,
+        role: updatedUser.role,
+      },
+    };
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(updatedSession));
+      } catch (err) {
+        console.error("Error al actualizar sesión activa:", err);
+      }
+    }
+  }
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("library_auth_change"));
+  }
+
+  return { success: true };
+}
+
+/**
+ * Suscripción en tiempo real a cambios de usuarios (Supabase Realtime + Storage local)
+ */
+export function subscribeToUsers(
+  onUpdate: (users: AppUser[]) => void,
+): () => void {
+  let isSubscribed = true;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const triggerReload = () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      if (!isSubscribed) return;
+      try {
+        const fresh = await getUsers();
+        if (isSubscribed) {
+          onUpdate(fresh);
+        }
+      } catch (err) {
+        console.warn("Error al sincronizar usuarios en tiempo real:", err);
+      }
+    }, 250);
+  };
+
+  // Sincronización entre pestañas en el mismo navegador
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key && event.key.includes(STORAGE_USERS_KEY)) {
+      triggerReload();
+    }
+  };
+
+  const handleCustomEvent = () => {
+    triggerReload();
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("library_auth_change", handleCustomEvent);
+  }
+
+  // Sincronización en vivo multidispositivo mediante Supabase Realtime
+  let channel: RealtimeChannel | null = null;
+  if (isSupabaseConfigured && supabase) {
+    const channelId = `users-realtime-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    channel = supabase
+      .channel(channelId)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_users" },
+        () => triggerReload(),
+      )
+      .subscribe();
+  }
+
+  return () => {
+    isSubscribed = false;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("library_auth_change", handleCustomEvent);
+    }
+    if (channel && supabase) {
+      void supabase.removeChannel(channel);
+    }
+  };
 }
