@@ -1,26 +1,134 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg-primary: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-muted: #f1f5f9;
+    --border-subtle: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --shelf-frame: #334155;
+    --shelf-cell-bg: #f8fafc;
+    --shelf-divider: #cbd5e1;
+    --accent-glow: rgba(59, 130, 246, 0.25);
+  }
+
+  .dark {
+    --bg-primary: #090d16;
+    --bg-surface: #0f172a;
+    --bg-muted: #1e293b;
+    --border-subtle: #334155;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --shelf-frame: #1e293b;
+    --shelf-cell-bg: #0b1120;
+    --shelf-divider: #1e293b;
+    --accent-glow: rgba(96, 165, 250, 0.35);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Patrón para cubos sin uso (disabled) */
+.pattern-disabled {
+  background-color: #f1f5f9;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(148, 163, 184, 0.22) 10px,
+    rgba(148, 163, 184, 0.22) 20px
+  );
+}
+
+.dark .pattern-disabled {
+  background-color: #0d1527;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(51, 65, 85, 0.4) 10px,
+    rgba(51, 65, 85, 0.4) 20px
+  );
+}
+
+/* Marco Kallax realista */
+.kallax-outer-frame {
+  box-shadow: 
+    0 20px 35px -10px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dark .kallax-outer-frame {
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Efecto de lomo de libro */
+.book-spine-shadow {
+  box-shadow: 
+    -2px 0 4px rgba(0, 0, 0, 0.15),
+    inset 2px 0 2px rgba(255, 255, 255, 0.2),
+    inset -2px 0 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Efecto cristal / Glassmorphism */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-effect {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+/* Parquet de madera cálida para el suelo de la habitación */
+.parquet-floor {
+  background-color: #1e130c;
+  background-image: 
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(rgba(0,0,0,0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, #120b06 0%, #1c1009 50%, #26160d 100%);
+  background-size: 80px 20px, 80px 20px, 100% 100%;
+}
+
+/* Rodapié / Zócalo entre pared y suelo */
+.skirting-board {
+  background: linear-gradient(to bottom, #334155 0%, #1e293b 70%, #0f172a 100%);
+  border-top: 2px solid #475569;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+
+/* Pared de la habitación con iluminación cenital suave */
+.room-wall-ambient {
+  background: radial-gradient(circle at 50% 18%, rgba(30, 41, 59, 0.7) 0%, rgba(9, 13, 22, 1) 75%);
+}
+
+/* Respeto a accesibilidad y movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
