@@ -49,13 +49,21 @@ export function AppHeader({ title, bookCount, onAddBook }: AppHeaderProps) {
 
         {/* Acciones y métricas */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {isSupabaseConfigured && (
+          {isSupabaseConfigured ? (
             <span
-              className="hidden sm:inline-flex items-center gap-1.5 text-[10px] text-emerald-300 bg-emerald-950/80 px-2 py-1 rounded-lg border border-emerald-800/70 font-mono shadow-sm"
+              className="inline-flex items-center gap-1.5 text-[10px] text-emerald-300 bg-emerald-950/80 px-2 py-1 rounded-lg border border-emerald-800/70 font-mono shadow-sm"
               title="Base de datos Supabase conectada con sincronización en vivo multidispositivo"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>Nube (En vivo)</span>
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 text-[10px] text-amber-300 bg-amber-950/80 px-2 py-1 rounded-lg border border-amber-800/70 font-mono shadow-sm"
+              title="Faltan variables NEXT_PUBLIC_SUPABASE_* en Vercel. Modo local activo sin sincronización."
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span>Solo Local</span>
             </span>
           )}
 
