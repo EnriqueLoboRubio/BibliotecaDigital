@@ -52,9 +52,18 @@ export function RoomSelector({
             const isEditing = editingRoomId === room.id;
 
             // Muebles que pertenecen a esta habitación
-            const roomShelves = shelves.filter(
-              (s) => room.shelfIds?.includes(s.id) || s.roomId === room.id,
-            );
+            const roomShelves = shelves.filter((s) => {
+              if (room.shelfIds?.includes(s.id) || s.roomId === room.id) {
+                return true;
+              }
+              const isAssigned = rooms.some(
+                (r) => r.shelfIds?.includes(s.id) || s.roomId === r.id,
+              );
+              if (!isAssigned && room.id === rooms[0]?.id) {
+                return true;
+              }
+              return false;
+            });
             const shelfIdsSet = new Set(roomShelves.map((s) => s.id));
             const roomBooksCount = books.filter((b) =>
               shelfIdsSet.has(b.location.shelfId),

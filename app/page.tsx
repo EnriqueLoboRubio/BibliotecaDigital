@@ -381,22 +381,32 @@ export default function HomePage() {
   // Resolución de habitaciones y muebles
   const roomsList = catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room || initialRoom];
   const activeRoom = roomsList.find((r) => r.id === activeRoomId) || roomsList[0];
-  const activeRoomShelves = catalog.shelves.filter(
-    (s) => activeRoom.shelfIds?.includes(s.id) || s.roomId === activeRoom.id,
-  );
-  const displayedShelves = activeRoomShelves.length > 0 ? activeRoomShelves : catalog.shelves;
+
+  // Filtrar ESTRICTAMENTE los muebles de la estancia activa (no mostrar muebles de otras habitaciones)
+  const displayedShelves = catalog.shelves.filter((s) => {
+    if (activeRoom.shelfIds?.includes(s.id) || s.roomId === activeRoom.id) {
+      return true;
+    }
+    const isAssigned = roomsList.some(
+      (r) => r.shelfIds?.includes(s.id) || s.roomId === r.id,
+    );
+    if (!isAssigned && activeRoom.id === roomsList[0]?.id) {
+      return true;
+    }
+    return false;
+  });
+
   const activeShelf =
     displayedShelves.find((s) => s.id === activeShelfId) ||
     displayedShelves[0] ||
-    catalog.shelves[0] ||
-    initialShelves[0];
+    null;
 
-  const activeShelfCells = catalog.cells.filter(
-    (c) => c.shelfId === activeShelf.id,
-  );
+  const activeShelfCells = activeShelf
+    ? catalog.cells.filter((c) => c.shelfId === activeShelf.id)
+    : [];
 
   const selectedBook = books.find((b) => b.id === selectedBookId);
-  const selectedBookLocation = selectedBook
+  const selectedBookLocation = selectedBook && activeShelf
     ? resolveLocation(activeShelf, selectedBook.location)
     : null;
 
@@ -409,8 +419,12 @@ export default function HomePage() {
         onAddBook={
           canEdit
             ? () => {
-                setAddLocation(undefined);
-                setIsAddModalOpen(true);
+                if (displayedShelves.length === 0) {
+                  setIsAddShelfModalOpen(true);
+                } else {
+                  setAddLocation(undefined);
+                  setIsAddModalOpen(true);
+                }
               }
             : undefined
         }
@@ -423,23 +437,29 @@ export default function HomePage() {
             <div className="flex items-center gap-2 mb-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 font-semibold">
-                {catalog.room.name}
+                {activeRoom.name}
               </span>
               <span className="text-xs text-slate-400 font-mono">
-                ({catalog.shelves.length} {catalog.shelves.length === 1 ? "mueble" : "muebles"})
+                ({displayedShelves.length} {displayedShelves.length === 1 ? "mueble" : "muebles"})
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <span>{catalog.room.name}</span>
+              <span>{activeRoom.name}</span>
               <span className="text-slate-500 font-normal">/</span>
               <span className="text-blue-400 font-semibold text-lg sm:text-xl">
-                {viewMode === "room" ? "Plano General" : activeShelf.name}
+                {viewMode === "room"
+                  ? "Plano General"
+                  : activeShelf
+                    ? activeShelf.name
+                    : "Sin muebles"}
               </span>
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
               {viewMode === "room"
                 ? "Distribución de muebles en la estancia. Haz clic en cualquiera para enfocarlo."
-                : `Estantería de ${activeShelf.columns}×${activeShelf.rows} cubos. Haz clic en un cubo para desplegar la profundidad.`}
+                : activeShelf
+                  ? `Estantería de ${activeShelf.columns}×${activeShelf.rows} cubos. Haz clic en un cubo para desplegar la profundidad.`
+                  : "Esta estancia está vacía. Añade tu primer mueble para comenzar a organizar tus libros."}
             </p>
           </div>
 
@@ -465,11 +485,24 @@ export default function HomePage() {
               setActiveRoomId(roomId);
               const targetRoom = roomsList.find((r) => r.id === roomId);
               if (targetRoom) {
-                const targetShelves = catalog.shelves.filter(
-                  (s) => targetRoom.shelfIds?.includes(s.id) || s.roomId === targetRoom.id,
-                );
+                const targetShelves = catalog.shelves.filter((s) => {
+                  if (targetRoom.shelfIds?.includes(s.id) || s.roomId === targetRoom.id) {
+                    return true;
+                  }
+                  const isAssigned = roomsList.some(
+                    (r) => r.shelfIds?.includes(s.id) || s.roomId === r.id,
+                  );
+                  if (!isAssigned && targetRoom.id === roomsList[0]?.id) {
+                    return true;
+                  }
+                  return false;
+                });
                 if (targetShelves.length > 0) {
                   setActiveShelfId(targetShelves[0].id);
+                  setViewMode("shelf");
+                } else {
+                  setActiveShelfId("");
+                  setViewMode("shelf");
                 }
               }
             }}
@@ -479,15 +512,11 @@ export default function HomePage() {
           />
         </section>
 
-        {/* Selector de Muebles de la Habitación Activa y botón para añadir más */}
-        <section className="w-full flex items-center justify-between gap-3 overflow-x-auto pb-1 z-20">
-          <div className="flex items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 shadow-md">
-            {displayedShelves.length === 0 ? (
-              <span className="text-xs text-slate-400 py-1 px-3 italic">
-                No hay muebles en esta estancia todavía.
-              </span>
-            ) : (
-              displayedShelves.map((shelf) => {
+        {/* Selector de Muebles de la Habitación Activa y botón para añadir más (solo si hay muebles) */}
+        {displayedShelves.length > 0 && (
+          <section className="w-full flex items-center justify-between gap-3 overflow-x-auto pb-1 z-20">
+            <div className="flex items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 shadow-md">
+              {displayedShelves.map((shelf) => {
                 const isActive = viewMode === "shelf" && activeShelfId === shelf.id;
                 const count = books.filter((b) => b.location.shelfId === shelf.id).length;
                 return (
@@ -515,40 +544,40 @@ export default function HomePage() {
                     )}
                   </button>
                 );
-              })
-            )}
+              })}
 
-            {displayedShelves.length > 1 && (
+              {displayedShelves.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setViewMode("room")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                    viewMode === "room"
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                  }`}
+                >
+                  <span>Plano de la Estancia</span>
+                </button>
+              )}
+            </div>
+
+            {canEdit && (
               <button
                 type="button"
-                onClick={() => setViewMode("room")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                  viewMode === "room"
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
-                }`}
+                onClick={() => setIsAddShelfModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/70 border border-emerald-700/60 shadow-md transition-all flex items-center gap-1.5 shrink-0"
               >
-                <span>Plano de la Estancia</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>+ Nuevo Mueble</span>
               </button>
             )}
-          </div>
+          </section>
+        )}
 
-          {canEdit && (
-            <button
-              type="button"
-              onClick={() => setIsAddShelfModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/70 border border-emerald-700/60 shadow-md transition-all flex items-center gap-1.5 shrink-0"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              <span>+ Nuevo Mueble</span>
-            </button>
-          )}
-        </section>
-
-        {/* Estado Vacío / Onboarding guiado */}
-        {books.length === 0 && (
+        {/* Estado Vacío / Onboarding guiado (solo si hay muebles pero no libros) */}
+        {displayedShelves.length > 0 && books.length === 0 && (
           <div className="rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900/80 to-slate-900/60 border border-blue-500/30 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-2xl backdrop-blur-md z-20">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0 text-blue-400">
@@ -591,11 +620,49 @@ export default function HomePage() {
         {/* Cuadro artístico abstracto en la pared */}
         <WallArt />
 
-        {/* Escenario de la habitación según el modo de vista */}
-        {viewMode === "room" ? (
+        {/* Escenario de la habitación según el estado y modo de vista */}
+        {displayedShelves.length === 0 ? (
+          /* Estado Vacío de la Habitación: Botón de + Nuevo Mueble centrado en la pantalla */
+          <section className="flex-1 w-full min-h-[48vh] sm:min-h-[55vh] flex flex-col items-center justify-center py-10 sm:py-16 px-4 my-auto text-center z-10 animate-fade-in">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full" />
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-slate-800/90 to-slate-900/90 border border-slate-700/80 shadow-2xl flex items-center justify-center text-emerald-400">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-400/90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
+              Habitación sin muebles
+            </h2>
+            <p className="text-sm text-slate-400 max-w-md mb-8">
+              Aún no hay ningún mueble en <span className="font-semibold text-slate-200">&ldquo;{activeRoom.name}&rdquo;</span>. Añade tu primera estantería para empezar a colocar libros en esta estancia.
+            </p>
+
+            {canEdit ? (
+              <button
+                type="button"
+                onClick={() => setIsAddShelfModalOpen(true)}
+                className="group px-7 py-4 rounded-2xl text-sm sm:text-base font-bold text-white bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-2xl shadow-emerald-950/60 border border-emerald-400/40 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center group-hover:rotate-90 transition-transform">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <span>+ Nuevo Mueble</span>
+              </button>
+            ) : (
+              <p className="text-xs text-slate-500 italic bg-slate-900/60 px-4 py-2.5 rounded-xl border border-slate-800">
+                Inicia sesión con permisos de edición para añadir muebles a esta estancia.
+              </p>
+            )}
+          </section>
+        ) : viewMode === "room" ? (
           <section className="py-4 z-10">
             <RoomPlan
-              shelves={catalog.shelves}
+              shelves={displayedShelves}
               cells={catalog.cells}
               books={books}
               highlightedBookId={highlightedBookId}
@@ -606,7 +673,7 @@ export default function HomePage() {
               }}
             />
           </section>
-        ) : (
+        ) : activeShelf ? (
           <section className="relative flex flex-col md:flex-row items-center md:items-end justify-center gap-4 lg:gap-8 pt-2 pb-0">
             {/* Mueble Kallax activo centrado con repisa superior y patas */}
             <div className="w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl flex-1 z-10">
@@ -623,7 +690,7 @@ export default function HomePage() {
                 onToggleCellEnabled={handleToggleCellEnabled}
               />
 
-              {canEdit && catalog.shelves.length > 1 && (
+              {canEdit && displayedShelves.length > 1 && (
                 <div className="w-full flex justify-end mt-2">
                   <button
                     type="button"
@@ -641,7 +708,7 @@ export default function HomePage() {
               <FloorPlant />
             </div>
           </section>
-        )}
+        ) : null}
       </main>
 
       {/* Suelo de la habitación: Rodapié y Parquet de madera */}
@@ -722,7 +789,7 @@ export default function HomePage() {
       )}
 
       {/* Modal para registrar un nuevo libro */}
-      {isAddModalOpen && (
+      {isAddModalOpen && activeShelf && (
         <AddBookModal
           shelf={activeShelf}
           cells={activeShelfCells}
