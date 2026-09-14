@@ -221,10 +221,12 @@ export function ShelfUnit({
 
       {/* Estructura física completa del mueble Kallax con repisa superior y marco grueso */}
       <div className="w-full relative">
-        {/* Tapa superior del mueble con bisel */}
-        <div className="w-full h-3 sm:h-4 bg-gradient-to-r from-slate-750 via-slate-800 to-slate-750 rounded-t-xl shadow-md border-t border-slate-600/70 relative z-10" />
+        {/* Tapa superior del mueble con relieve 2.5D y reflejo satinado de tablero de 38 mm */}
+        <div className="w-full h-3.5 sm:h-5 bg-gradient-to-r from-slate-700 via-slate-750 to-slate-700 rounded-t-xl shadow-lg border-t-2 border-slate-500/60 border-l border-r border-slate-600/40 relative z-10 flex items-center justify-between px-3">
+          <div className="w-full h-0.5 sm:h-1 bg-gradient-to-r from-transparent via-white/15 to-transparent rounded-full" />
+        </div>
 
-        {/* Mueble Kallax con sus cuadrículas */}
+        {/* Mueble Kallax con sus cuadrículas y bisel 2.5D direccional */}
         <section
           aria-label={label}
           onClick={
@@ -233,7 +235,9 @@ export function ShelfUnit({
               : undefined
           }
           className={`
-            kallax-outer-frame rounded-b-2xl border-[6px] sm:border-[10px] md:border-[14px] lg:border-[16px] border-[#182030] bg-[#0c121e] p-1.5 sm:p-2.5 md:p-3.5 lg:p-4
+            kallax-outer-frame rounded-b-2xl border-[6px] sm:border-[10px] md:border-[14px] lg:border-[16px]
+            border-t-[#25324c] border-l-[#1d273c] border-r-[#101724] border-b-[#0a0f18]
+            bg-[#090e18] p-1.5 sm:p-2.5 md:p-3.5 lg:p-4
             transition-all duration-300 relative z-0 w-full
             ${density === "room" ? "cursor-pointer hover:border-slate-700 hover:shadow-2xl" : "shadow-2xl"}
             ${isConfigureMode ? "ring-2 ring-amber-500/60 shadow-amber-500/10" : ""}

@@ -97,14 +97,18 @@ export function ShelfCellView({
           }
         }}
         className={`
-          relative aspect-square w-full rounded-lg bg-[#0a0f1d] pattern-disabled border border-slate-800/90
+          relative aspect-square w-full rounded-lg bg-[#0a0f1d] pattern-disabled border border-slate-800/90 overflow-hidden
           flex flex-col items-center justify-between select-none cursor-pointer p-1.5 sm:p-2 transition-all duration-300 group
           hover:border-slate-700 hover:bg-slate-900/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400
           ${isConfigureMode ? "ring-2 ring-emerald-500/60 hover:ring-emerald-400 border-emerald-500/50" : ""}
         `}
       >
+        {/* Oclusión ambiental superior e izquierda */}
+        <div className="absolute top-0 inset-x-0 h-5 sm:h-7 kallax-ceiling-ambient pointer-events-none z-10" aria-hidden="true" />
+        <div className="absolute inset-y-0 left-0 w-2 sm:w-3 kallax-wall-ambient pointer-events-none z-10" aria-hidden="true" />
+
         {/* Identificador sutil en reposo / detallado en hover */}
-        <div className="w-full flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 pointer-events-none">
+        <div className="w-full flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 pointer-events-none z-20">
           <span className="text-[9px] sm:text-[10px] text-slate-500 group-hover:text-slate-400 transition-colors truncate">
             No disponible
           </span>
@@ -256,17 +260,27 @@ export function ShelfCellView({
       </div>
 
       {/* --------------------------------------------------------------------- */}
+      {/* 2.5D NICHOS Y OCLUSIÓN AMBIENTAL (Techo y pared lateral izquierda)    */}
+      {/* --------------------------------------------------------------------- */}
+      <div className="absolute top-0 inset-x-0 h-6 sm:h-9 kallax-ceiling-ambient pointer-events-none z-10" aria-hidden="true" />
+      <div className="absolute inset-y-0 left-0 w-2.5 sm:w-4 kallax-wall-ambient pointer-events-none z-10" aria-hidden="true" />
+
+      {/* --------------------------------------------------------------------- */}
       {/* 2. CUERPO DEL COMPARTIMENTO (Libros físicos o nicho vacío)            */}
       {/* --------------------------------------------------------------------- */}
       <div className="relative flex-1 flex items-end justify-start px-1 sm:px-2.5 overflow-x-auto no-scrollbar gap-0.5 sm:gap-1.5 z-10">
+        {/* Sombra de suelo interior donde se asientan los libros */}
+        <div className="absolute inset-x-0 bottom-0 h-3 sm:h-5 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none z-0" aria-hidden="true" />
+
         {/* Si tiene libros en fondo, mostramos una silueta física visible de segunda fila */}
         {hasMultipleDepths && (
           <div
-            className={`absolute inset-x-1 sm:inset-x-2.5 bottom-0 h-10 sm:h-20 bg-gradient-to-t from-black/80 via-slate-950/60 to-transparent rounded-t border-t pointer-events-none z-0 flex items-end justify-around px-0.5 sm:px-1 pb-1 transition-all ${
+            className={`absolute inset-x-1 sm:inset-x-2.5 bottom-0 h-10 sm:h-20 bg-gradient-to-t from-black/85 via-slate-950/65 to-transparent rounded-t border-t pointer-events-none z-0 flex items-end justify-around px-0.5 sm:px-1 pb-1 transition-all ${
               isHighlightedBehind
-                ? "border-amber-500/60 bg-amber-950/40 opacity-95 shadow-inner"
+                ? "border-amber-500/70 bg-amber-950/45 opacity-95 shadow-inner"
                 : "border-slate-700/40 opacity-70"
             }`}
+            style={{ transform: "scale(0.95)", transformOrigin: "bottom center" }}
             aria-hidden="true"
           >
             <div className="w-full flex items-end justify-around gap-0.5 sm:gap-1">
@@ -310,9 +324,9 @@ export function ShelfCellView({
       </div>
 
       {/* --------------------------------------------------------------------- */}
-      {/* 3. REPISA INFERIOR DE MADERA KALLAX (Base sólida donde apoyan libros) */}
+      {/* 3. REPISA INFERIOR DE MADERA KALLAX (Base sólida 2.5D de apoyo)      */}
       {/* --------------------------------------------------------------------- */}
-      <div className="w-full kallax-wood-shelf h-2 sm:h-3.5 shrink-0 relative z-20 flex items-center justify-between px-1 sm:px-2 text-[7px] sm:text-[8px] text-amber-200/20 font-mono select-none pointer-events-none">
+      <div className="w-full kallax-wood-shelf h-2.5 sm:h-3.5 shrink-0 relative z-20 flex items-center justify-between px-1 sm:px-2 text-[7px] sm:text-[8px] text-amber-200/25 font-mono select-none pointer-events-none">
         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           ▾ B{cell.row}
         </span>

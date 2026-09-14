@@ -60,19 +60,34 @@ export function BookSpine({
       className={`
         w-[var(--spine-mob-w)] sm:w-[var(--spine-desk-w)]
         relative group flex flex-col justify-between items-center rounded-sm transition-all duration-200
-        cursor-pointer shrink-0 select-none book-spine-shadow border-r border-l ${color.bg} ${color.border}
+        cursor-pointer shrink-0 select-none book-spine-3d border-r border-l ${color.bg} ${color.border}
         ${dimmed ? "opacity-25 grayscale hover:opacity-75 hover:grayscale-0" : "opacity-100"}
-        ${highlighted ? "ring-2 ring-amber-400 scale-105 z-20 shadow-lg shadow-amber-400/30" : ""}
-        ${selected ? "ring-2 ring-blue-400 -translate-y-2 z-20 shadow-xl" : "hover:-translate-y-1 hover:z-10"}
+        ${highlighted ? "ring-2 ring-amber-400 scale-105 z-20 shadow-lg shadow-amber-400/40" : ""}
+        ${selected ? "ring-2 ring-blue-400 -translate-y-2 z-20 shadow-xl" : "hover:-translate-y-1.5 hover:z-10"}
       `}
     >
+      {/* Brillo cilíndrico longitudinal 2.5D sobre el lomo */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-sm opacity-50 mix-blend-overlay z-10"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(255,255,255,0.05) 20%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.05) 80%, rgba(0,0,0,0.6) 100%)",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Corte superior del libro en perspectiva (papel de páginas visto desde arriba) */}
+      <div className="w-full h-1 sm:h-1.5 bg-[#eee6d8] border-b border-black/40 rounded-t-sm shadow-inner flex items-center justify-center overflow-hidden opacity-95 shrink-0 z-20">
+        <div className="w-full h-[0.5px] bg-stone-900/25" />
+      </div>
+
       {/* Detalle de costilla superior del lomo */}
-      <div className={`w-full h-1 sm:h-1.5 border-t border-b ${color.accent} mt-0.5 sm:mt-1`} />
+      <div className={`w-full h-1 sm:h-1.5 border-t border-b ${color.accent} mt-0.5 z-20 shrink-0`} />
 
       {/* Título en vertical */}
-      <div className="flex-1 overflow-hidden flex items-center justify-center py-0.5 sm:py-1 px-0.5">
+      <div className="flex-1 overflow-hidden flex items-center justify-center py-0.5 sm:py-1 px-0.5 z-20">
         <span
-          className={`text-[8px] sm:text-[10px] md:text-[11px] font-semibold leading-tight tracking-tight ${color.text} whitespace-nowrap overflow-hidden text-ellipsis`}
+          className={`text-[8px] sm:text-[10px] md:text-[11px] font-semibold leading-tight tracking-tight ${color.text} whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]`}
           style={{
             writingMode: "vertical-rl",
             transform: "rotate(180deg)",
@@ -84,7 +99,13 @@ export function BookSpine({
       </div>
 
       {/* Detalle de costilla inferior */}
-      <div className={`w-full h-1 border-t border-b ${color.accent} mb-0.5 sm:mb-1`} />
+      <div className={`w-full h-1 border-t border-b ${color.accent} mb-0.5 z-20 shrink-0`} />
+
+      {/* Sombra de contacto en la base de la repisa */}
+      <div
+        className="absolute -bottom-1 inset-x-0.5 h-1.5 bg-black/70 rounded-full blur-[1.5px] pointer-events-none -z-10"
+        aria-hidden="true"
+      />
 
       {/* Tooltip con información rápida */}
       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center px-2 py-1 bg-slate-950/95 text-slate-100 text-[10px] rounded shadow-xl whitespace-nowrap z-30 pointer-events-none border border-slate-700">

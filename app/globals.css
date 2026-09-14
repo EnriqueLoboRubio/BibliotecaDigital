@@ -66,16 +66,30 @@ body {
   );
 }
 
-/* Marco Kallax realista con textura satinada y sombras profundas */
+/* Marco Kallax 2.5D realista: tablero de 38 mm con bisel exterior y sombras multicapa */
 .kallax-outer-frame {
   box-shadow: 
-    0 25px 60px -15px rgba(0, 0, 0, 0.7),
-    0 4px 12px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+    0 30px 70px -15px rgba(0, 0, 0, 0.85),
+    0 10px 25px -5px rgba(0, 0, 0, 0.6),
+    -8px 12px 20px -6px rgba(0, 0, 0, 0.45),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.14),
+    inset 1.5px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.7);
+  background: linear-gradient(175deg, #111827 0%, #0c121e 60%, #070a12 100%);
 }
 
-/* Efecto de lomo de libro */
+/* Volumen cilíndrico 2.5D para lomo de libro con brillo central y sombras de costura */
+.book-spine-3d {
+  box-shadow: 
+    -2px 0 5px rgba(0, 0, 0, 0.4),
+    1px 0 3px rgba(0, 0, 0, 0.3),
+    0 4px 6px -1px rgba(0, 0, 0, 0.5),
+    inset 1px 0 1px rgba(255, 255, 255, 0.25),
+    inset -1px 0 1.5px rgba(0, 0, 0, 0.5);
+  transform-origin: bottom center;
+}
+
+/* Efecto de lomo de libro (compatibilidad) */
 .book-spine-shadow {
   box-shadow: 
     -2px 0 5px rgba(0, 0, 0, 0.25),
@@ -122,22 +136,33 @@ body {
   background: radial-gradient(circle at 50% 18%, rgba(30, 41, 59, 0.7) 0%, rgba(9, 13, 22, 1) 75%);
 }
 
-/* Nicho empotrado 2.5D en cada compartimento Kallax */
+/* Cavidad 2.5D de compartimento Kallax: perspectiva interna y oclusión ambiental */
 .kallax-compartment-recess {
   box-shadow: 
-    inset 0 14px 18px -6px rgba(0, 0, 0, 0.85),
-    inset 0 -4px 8px -2px rgba(0, 0, 0, 0.5),
-    inset 4px 0 8px -2px rgba(0, 0, 0, 0.35),
-    inset -4px 0 8px -2px rgba(0, 0, 0, 0.35);
+    inset 0 18px 22px -6px rgba(0, 0, 0, 0.92),
+    inset 6px 0 12px -3px rgba(0, 0, 0, 0.65),
+    inset -6px 0 12px -3px rgba(0, 0, 0, 0.45),
+    inset 0 -6px 10px -2px rgba(0, 0, 0, 0.75);
 }
 
-/* Balda / repisa inferior de madera física Kallax donde descansan los libros */
+/* Balda / repisa inferior de madera física Kallax donde descansan los libros en 2.5D */
 .kallax-wood-shelf {
-  background: linear-gradient(to bottom, #2d1b10 0%, #1a0f09 60%, #120a06 100%);
-  border-top: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(to bottom, #382013 0%, #24140b 50%, #150b06 100%);
+  border-top: 1.5px solid rgba(245, 158, 11, 0.25);
   box-shadow: 
-    0 -2px 5px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 -3px 8px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Oclusión ambiental en el techo interior del nicho Kallax */
+.kallax-ceiling-ambient {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.35) 60%, transparent 100%);
+}
+
+/* Bisel de pared lateral izquierda del nicho (reflejo direccional sutil) */
+.kallax-wall-ambient {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 70%, transparent 100%);
 }
 
 /* Animación de localización rápida, sobria y elegante para "Ver ubicación" */
