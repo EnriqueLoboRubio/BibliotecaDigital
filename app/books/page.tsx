@@ -135,93 +135,174 @@ export default function BooksIndexPage() {
             No se encontró ningún libro con «{searchTerm}».
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70 shadow-xl">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-950/80 text-slate-400 font-mono text-[11px] uppercase tracking-wider border-b border-slate-800">
-                <tr>
-                  <th className="px-4 py-3.5">Título y Autor</th>
-                  <th className="px-4 py-3.5 hidden sm:table-cell">Género / Año</th>
-                  <th className="px-4 py-3.5">Ubicación Física</th>
-                  <th className="px-4 py-3.5 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {filteredBooks.map((book) => {
-                  const loc = resolveLocation(shelf, book.location);
-                  const isBehind = book.location.depth > 1;
+          <>
+            {/* Vista en Tarjetas para Móvil (< md) */}
+            <div className="md:hidden flex flex-col gap-3">
+              {filteredBooks.map((book) => {
+                const loc = resolveLocation(shelf, book.location);
+                const isBehind = book.location.depth > 1;
 
-                  return (
-                    <tr key={book.id} title={loc.phrase} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="px-4 py-3.5">
-                        <Link href={`/books/${book.id}`} className="font-semibold text-white hover:text-blue-400 block">
-                          {book.title}
-                        </Link>
-                        <span className="text-slate-400 text-[11px]">
-                          {book.author}
-                        </span>
-                      </td>
+                return (
+                  <article
+                    key={book.id}
+                    title={loc.phrase}
+                    className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 flex flex-col gap-3 shadow-lg"
+                  >
+                    <div>
+                      <Link href={`/books/${book.id}`} className="font-bold text-white hover:text-blue-400 text-sm block leading-snug">
+                        {book.title}
+                      </Link>
+                      <span className="text-slate-400 text-xs mt-0.5 block">
+                        {book.author}
+                      </span>
+                    </div>
 
-                      <td className="px-4 py-3.5 hidden sm:table-cell">
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium mr-2">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                      {book.genre && (
+                        <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-medium text-[11px]">
                           {book.genre}
                         </span>
-                        <span className="text-slate-500">
-                          {book.year}
+                      )}
+                      {book.year && (
+                        <span className="text-slate-400 text-[11px]">
+                          Año {book.year}
                         </span>
-                      </td>
+                      )}
+                    </div>
 
-                      <td className="px-4 py-3.5">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded text-xs">
-                              Fila {book.location.row}, Columna {book.location.column}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded font-semibold text-xs ${
-                                isBehind
-                                  ? "bg-amber-950/80 text-amber-300 border border-amber-700/60"
-                                  : "bg-blue-950/80 text-blue-300 border border-blue-700/60"
-                              }`}
-                            >
-                              {isBehind ? "Fila del fondo" : "Primera fila"} · Posición {book.location.position}
+                    <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded text-[11px]">
+                          Fila {book.location.row}, Col. {book.location.column}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded font-semibold text-[11px] ${
+                            isBehind
+                              ? "bg-amber-950/80 text-amber-300 border border-amber-700/60"
+                              : "bg-blue-950/80 text-blue-300 border border-blue-700/60"
+                          }`}
+                        >
+                          {isBehind ? "Fila del fondo" : "Primera fila"} · Pos. {book.location.position}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/60">
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingBook(book)}
+                          className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs transition-colors min-h-[38px] flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>✏️</span>
+                          <span>Editar</span>
+                        </button>
+                      )}
+
+                      <Link
+                        href={`/?book=${book.id}`}
+                        className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-semibold text-xs transition-colors min-h-[38px] flex items-center gap-1.5"
+                      >
+                        <span>Localizar</span>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            {/* Vista en Tabla Estructurada para Tablet y Escritorio (≥ md) */}
+            <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/70 shadow-xl">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950/80 text-slate-400 font-mono text-[11px] uppercase tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th className="px-4 py-3.5">Título y Autor</th>
+                    <th className="px-4 py-3.5">Género / Año</th>
+                    <th className="px-4 py-3.5">Ubicación Física</th>
+                    <th className="px-4 py-3.5 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {filteredBooks.map((book) => {
+                    const loc = resolveLocation(shelf, book.location);
+                    const isBehind = book.location.depth > 1;
+
+                    return (
+                      <tr key={book.id} title={loc.phrase} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="px-4 py-3.5">
+                          <Link href={`/books/${book.id}`} className="font-semibold text-white hover:text-blue-400 block">
+                            {book.title}
+                          </Link>
+                          <span className="text-slate-400 text-[11px]">
+                            {book.author}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5">
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium mr-2">
+                            {book.genre}
+                          </span>
+                          <span className="text-slate-500">
+                            {book.year}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3.5">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded text-xs">
+                                Fila {book.location.row}, Columna {book.location.column}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded font-semibold text-xs ${
+                                  isBehind
+                                    ? "bg-amber-950/80 text-amber-300 border border-amber-700/60"
+                                    : "bg-blue-950/80 text-blue-300 border border-blue-700/60"
+                                }`}
+                              >
+                                {isBehind ? "Fila del fondo" : "Primera fila"} · Posición {book.location.position}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-mono text-slate-400">
+                              Coordenada: F{book.location.row}·C{book.location.column}
                             </span>
                           </div>
-                          <span className="text-[10px] font-mono text-slate-400">
-                            Coordenada: F{book.location.row}·C{book.location.column}
-                          </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="inline-flex items-center gap-2">
-                          {canEdit && (
-                            <button
-                              type="button"
-                              onClick={() => setEditingBook(book)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-colors"
-                              title="Editar libro y ubicación"
+                        <td className="px-4 py-3.5 text-right">
+                          <div className="inline-flex items-center gap-2">
+                            {canEdit && (
+                              <button
+                                type="button"
+                                onClick={() => setEditingBook(book)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium transition-colors cursor-pointer"
+                                title="Editar libro y ubicación"
+                              >
+                                <span>✏️ Editar</span>
+                              </button>
+                            )}
+
+                            <Link
+                              href={`/?book=${book.id}`}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-medium transition-colors"
                             >
-                              <span>✏️ Editar</span>
-                            </button>
-                          )}
-
-                          <Link
-                            href={`/?book=${book.id}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-medium transition-colors"
-                          >
-                            <span>Localizar</span>
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                              <span>Localizar</span>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                              </svg>
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </main>
 

@@ -154,13 +154,13 @@ export function CellDepthModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl rounded-2xl bg-[#0f172a] border border-slate-700 shadow-2xl p-6 text-slate-100 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-2xl rounded-2xl bg-[#0f172a] border border-slate-700 shadow-2xl p-4 sm:p-6 text-slate-100 flex flex-col gap-4 sm:gap-5 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabecera del modal */}
-        <div className="flex items-start justify-between border-b border-slate-800 pb-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1.5 text-xs">
+        <div className="flex items-start justify-between border-b border-slate-800 pb-3 sm:pb-4 gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1 text-xs">
               <span className="font-semibold text-amber-400">
                 {shelf.name}
               </span>
@@ -170,20 +170,20 @@ export function CellDepthModal({
               </span>
               <span className="text-slate-600">•</span>
               <span className="text-slate-400">
-                {cell.depthCount} {cell.depthCount === 1 ? "nivel" : "niveles de profundidad"}
+                {cell.depthCount} {cell.depthCount === 1 ? "nivel" : "niveles"}
               </span>
             </div>
-            <h2 id="cell-modal-title" className="text-xl font-bold tracking-tight text-white">
+            <h2 id="cell-modal-title" className="text-lg sm:text-xl font-bold tracking-tight text-white leading-snug">
               Libros en este compartimento
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Vista en profundidad: los libros del fondo arriba y los del frente abajo.
+              Vista en profundidad: fondo arriba y primera fila al frente.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
             aria-label="Cerrar ventana"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,7 +194,7 @@ export function CellDepthModal({
 
         {/* Advertencia de confirmación al desactivar el cubo */}
         {showConfirmDisable && (
-          <div className="p-4 rounded-xl bg-red-950/80 border border-red-800 text-slate-100 flex flex-col gap-3 animate-in fade-in duration-150">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-red-950/80 border border-red-800 text-slate-100 flex flex-col gap-3 animate-in fade-in duration-150">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-red-900/60 border border-red-700/80 flex items-center justify-center shrink-0 text-red-300">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,14 +214,14 @@ export function CellDepthModal({
               <button
                 type="button"
                 onClick={() => setShowConfirmDisable(false)}
-                className="px-3 py-1.5 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium"
+                className="px-3 py-1.5 rounded-lg text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium min-h-[36px]"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleConfirmDisable}
-                className="px-3 py-1.5 rounded-lg text-xs bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold shadow-md shadow-red-600/30 transition-all"
+                className="px-3 py-1.5 rounded-lg text-xs bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold shadow-md shadow-red-600/30 transition-all min-h-[36px]"
               >
                 Sí, retirar {cellBooks.length} {cellBooks.length === 1 ? "libro" : "libros"} y bloquear
               </button>
@@ -230,7 +230,7 @@ export function CellDepthModal({
         )}
 
         {/* Barra de control de estado del compartimento y capacidades */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-300 font-medium">Estado:</span>
             <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-950/80 border border-emerald-800/80 text-emerald-300">
@@ -240,35 +240,35 @@ export function CellDepthModal({
               <button
                 type="button"
                 onClick={handleStartDisable}
-                className="text-xs text-slate-400 hover:text-red-400 hover:underline transition-colors ml-1"
+                className="text-xs text-slate-400 hover:text-red-400 hover:underline transition-colors ml-1 cursor-pointer"
                 title="Bloquear compartimento para otros usos"
               >
-                (Bloquear para otros usos)
+                (Bloquear)
               </button>
             )}
           </div>
 
           {isAdmin && onUpdateDepthCount && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => onUpdateDepthCount(cell.id, cell.depthCount + 1)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 transition-all flex items-center gap-1.5 shadow-sm min-h-[36px]"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>+ Añadir fila al fondo</span>
+                <span>+ Fila al fondo</span>
               </button>
 
               {cell.depthCount > 1 && booksAtDepth(cellBooks, cell, cell.depthCount).length === 0 && (
                 <button
                   type="button"
                   onClick={() => onUpdateDepthCount(cell.id, cell.depthCount - 1)}
-                  className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all min-h-[36px]"
                   title="Eliminar fila vacía del fondo"
                 >
-                  - Quitar fila del fondo
+                  - Quitar fila
                 </button>
               )}
             </div>
@@ -276,7 +276,7 @@ export function CellDepthModal({
         </div>
 
         {/* Filas de profundidad desplegadas en planta */}
-        <div className="flex flex-col gap-6 my-1">
+        <div className="flex flex-col gap-4 sm:gap-6 my-1">
           {depths.map((d) => {
             const depthBooks = booksAtDepth(cellBooks, cell, d);
             const isFront = d === 1;
@@ -285,14 +285,14 @@ export function CellDepthModal({
             return (
               <div
                 key={d}
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-3 sm:p-4 rounded-xl border transition-all ${
                   isFront
                     ? "bg-slate-900/90 border-amber-500/30 shadow-lg shadow-amber-500/5"
                     : "bg-slate-950/70 border-slate-800"
                 }`}
               >
                 {/* Cabecera de la profundidad */}
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
@@ -314,19 +314,19 @@ export function CellDepthModal({
                     <button
                       type="button"
                       onClick={() => onAddBookToCell(cell.row, cell.column, d)}
-                      className="text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/60 px-3 py-1 rounded-xl border border-amber-700/50 transition-colors flex items-center gap-1.5 shadow-sm"
+                      className="text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/60 px-3 py-1.5 rounded-xl border border-amber-700/50 transition-colors flex items-center justify-center gap-1.5 shadow-sm min-h-[36px] self-start sm:self-auto"
                     >
                       <span>+ Colocar libro aquí</span>
                     </button>
                   )}
                 </div>
 
-                {/* Balda con los libros alineados horizontalmente */}
-                <div className="min-h-[140px] rounded-lg bg-black/40 border-b-4 border-amber-950/70 px-4 py-3 flex items-end justify-start gap-2 overflow-x-auto shadow-inner">
+                {/* Balda gráfica con los libros alineados horizontalmente */}
+                <div className="min-h-[130px] sm:min-h-[140px] rounded-lg bg-black/40 border-b-4 border-amber-950/70 px-3 sm:px-4 py-3 flex items-end justify-start gap-2 overflow-x-auto shadow-inner">
                   {depthBooks.length > 0 ? (
                     depthBooks.map((book) => (
-                      <div key={book.id} className="flex flex-col items-center gap-1">
-                        <div className="h-28 flex items-end">
+                      <div key={book.id} className="flex flex-col items-center gap-1 shrink-0">
+                        <div className="h-24 sm:h-28 flex items-end">
                           <BookSpine
                             book={book}
                             selected={selectedBookId === book.id}
@@ -339,33 +339,64 @@ export function CellDepthModal({
                           />
                         </div>
                         <span className="text-[10px] text-slate-400 font-medium" title={`Posición ${book.location.position}`}>
-                          {book.location.position}
+                          Pos. {book.location.position}
                         </span>
                       </div>
                     ))
                   ) : (
                     <div className="w-full flex flex-col items-center justify-center py-6 text-slate-400">
-                      <span className="text-xs font-medium">Fila sin libros</span>
-                      <span className="text-[10px] text-slate-400 mt-1">
+                      <span className="text-xs font-medium">Fila vacía</span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">
                         No hay libros colocados en esta fila
                       </span>
                     </div>
                   )}
                 </div>
+
+                {/* Lista táctil adicional en móvil (< sm) para tocar libros fácilmente */}
+                {depthBooks.length > 0 && (
+                  <div className="sm:hidden mt-3 pt-3 border-t border-slate-800 space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Libros en esta fila ({depthBooks.length}):
+                    </span>
+                    <div className="flex flex-col gap-1.5">
+                      {depthBooks.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => onSelectBook(b.id)}
+                          className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 text-left transition-colors cursor-pointer min-h-[44px]"
+                        >
+                          <div className="min-w-0 flex-1 pr-2">
+                            <span className="text-xs font-bold text-white block truncate">
+                              {b.title}
+                            </span>
+                            <span className="text-[11px] text-slate-400 block truncate">
+                              {b.author}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-semibold text-amber-300 bg-amber-950/70 border border-amber-600/50 px-2 py-1 rounded-lg shrink-0">
+                            Ficha →
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
         {/* Pie del modal */}
-        <div className="flex items-center justify-between border-t border-slate-800 pt-4 text-xs text-slate-400">
-          <span>
-            Total: <strong className="text-slate-200">{cellBooks.length === 0 ? "Sin libros" : `${cellBooks.length} ${cellBooks.length === 1 ? "libro" : "libros"}`}</strong> en {cell.depthCount === 1 ? "1 fila" : `${cell.depthCount} filas`} de profundidad
+        <div className="flex items-center justify-between border-t border-slate-800 pt-3 sm:pt-4 text-xs text-slate-400">
+          <span className="truncate pr-2">
+            Total: <strong className="text-slate-200">{cellBooks.length === 0 ? "Sin libros" : `${cellBooks.length} ${cellBooks.length === 1 ? "libro" : "libros"}`}</strong>
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-colors"
+            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-colors min-h-[38px] cursor-pointer"
           >
             Cerrar
           </button>

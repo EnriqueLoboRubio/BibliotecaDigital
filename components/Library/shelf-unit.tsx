@@ -233,32 +233,30 @@ export function ShelfUnit({
               : undefined
           }
           className={`
-            kallax-outer-frame rounded-b-2xl border-[8px] sm:border-[12px] md:border-[16px] border-[#182030] bg-[#0c121e] p-2 sm:p-3 md:p-4
-            transition-all duration-300 relative z-0 overflow-x-auto no-scrollbar
+            kallax-outer-frame rounded-b-2xl border-[6px] sm:border-[10px] md:border-[14px] lg:border-[16px] border-[#182030] bg-[#0c121e] p-1.5 sm:p-2.5 md:p-3.5 lg:p-4
+            transition-all duration-300 relative z-0 w-full
             ${density === "room" ? "cursor-pointer hover:border-slate-700 hover:shadow-2xl" : "shadow-2xl"}
             ${isConfigureMode ? "ring-2 ring-amber-500/60 shadow-amber-500/10" : ""}
           `}
         >
           {/* Guías sutiles de columnas superiores (1 a 4) */}
           <div
-            className="grid gap-2 sm:gap-3 md:gap-3.5 mb-1.5 px-0.5 text-center pointer-events-none"
+            className="grid gap-1.5 sm:gap-2.5 md:gap-3.5 mb-1.5 px-0.5 text-center pointer-events-none w-full"
             style={{
               gridTemplateColumns: `repeat(${shelf.columns}, minmax(0, 1fr))`,
-              minWidth: shelf.columns >= 4 ? `${shelf.columns * 74}px` : undefined,
             }}
           >
             {Array.from({ length: shelf.columns }, (_, idx) => (
-              <span key={`col-head-${idx + 1}`} className="text-[10px] sm:text-[11px] font-semibold text-slate-500/70 uppercase tracking-wider">
+              <span key={`col-head-${idx + 1}`} className="text-[9px] sm:text-[11px] font-semibold text-slate-500/70 uppercase tracking-wider truncate">
                 Col. {idx + 1}
               </span>
             ))}
           </div>
 
           <div
-            className="grid gap-2 sm:gap-3 md:gap-3.5"
+            className="grid gap-1.5 sm:gap-2.5 md:gap-3.5 w-full"
             style={{
               gridTemplateColumns: `repeat(${shelf.columns}, minmax(0, 1fr))`,
-              minWidth: shelf.columns >= 4 ? `${shelf.columns * 74}px` : undefined,
             }}
           >
             {[...cells]

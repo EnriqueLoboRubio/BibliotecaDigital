@@ -116,7 +116,7 @@ export default function ShelvesIndexPage() {
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 self-start sm:self-auto"
+              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 w-full sm:w-auto min-h-[40px] cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -139,7 +139,7 @@ export default function ShelvesIndexPage() {
             return (
               <article
                 key={shelf.id}
-                className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 flex flex-col justify-between gap-6 shadow-xl hover:border-slate-700 transition-all group"
+                className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 sm:p-6 flex flex-col justify-between gap-5 sm:gap-6 shadow-xl hover:border-slate-700 transition-all group"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">

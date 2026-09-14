@@ -590,7 +590,7 @@ export default function HomePage() {
           </div>
 
           {/* Buscador de localización espacial con resolución física */}
-          <div className="w-full lg:w-96 shrink-0">
+          <div className="w-full lg:w-[400px] xl:w-[460px] 2xl:w-[500px] shrink-0">
             <SearchBox
               query={searchQuery}
               results={searchResults}

@@ -160,7 +160,7 @@ export function SearchBox({
                 </span>
               </div>
 
-              <ul className="max-h-84 overflow-y-auto divide-y divide-slate-800/80" role="listbox">
+              <ul className="max-h-[60vh] sm:max-h-96 overflow-y-auto divide-y divide-slate-800/80" role="listbox">
                 {results.map((hit) => {
                   const loc = resolveLocationInfo
                     ? resolveLocationInfo(hit)
@@ -177,11 +177,11 @@ export function SearchBox({
 
                   return (
                     <li key={hit.book.id} role="option" aria-selected={false}>
-                      <div className="p-4 hover:bg-slate-850/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 group border-l-2 border-transparent hover:border-amber-400">
+                      <div className="p-3 sm:p-4 hover:bg-slate-850/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 group border-l-2 border-transparent hover:border-amber-400">
                         {/* Datos bibliográficos y Ubicación */}
-                        <div className="min-w-0 flex-1 space-y-2">
+                        <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
                           <div>
-                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-amber-300 transition-colors leading-snug">
                               {hit.book.title}
                             </h4>
                             <p className="text-xs text-slate-300 mt-0.5">
@@ -195,22 +195,22 @@ export function SearchBox({
                           </div>
 
                           {/* Bloque estructurado de Ubicación Física */}
-                          <div className="pt-2 border-t border-slate-800/80">
+                          <div className="pt-1.5 sm:pt-2 border-t border-slate-800/80">
                             <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
                               Ubicación:
                             </span>
                             <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium text-[11px] sm:text-xs">
                                 📍 {loc.roomName}
                               </span>
-                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium text-[11px] sm:text-xs">
                                 🗄️ {loc.shelfName}
                               </span>
-                              <span className="px-2 py-0.5 rounded-md bg-amber-950/90 text-amber-200 border border-amber-600/60 font-semibold">
+                              <span className="px-2 py-0.5 rounded-md bg-amber-950/90 text-amber-200 border border-amber-600/60 font-semibold text-[11px] sm:text-xs">
                                 Fila {loc.row} · Columna {loc.column}
                               </span>
                               <span
-                                className={`px-2 py-0.5 rounded-md font-semibold border ${
+                                className={`px-2 py-0.5 rounded-md font-semibold text-[11px] sm:text-xs border ${
                                   isBehind
                                     ? "bg-amber-950 text-amber-300 border-amber-700/60"
                                     : "bg-slate-800/90 text-slate-300 border-slate-700"
@@ -223,11 +223,11 @@ export function SearchBox({
                         </div>
 
                         {/* Botón de acción: Ver ubicación */}
-                        <div className="shrink-0 flex items-center">
+                        <div className="shrink-0 flex items-center pt-1 sm:pt-0">
                           <button
                             type="button"
                             onClick={() => handleSelect(hit)}
-                            className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-amber-300 bg-amber-950/70 hover:bg-amber-600 hover:text-white border border-amber-500/60 shadow-md shadow-amber-950/40 transition-all flex items-center justify-center gap-2 group/btn cursor-pointer active:scale-95"
+                            className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold text-amber-300 bg-amber-950/70 hover:bg-amber-600 hover:text-white border border-amber-500/60 shadow-md shadow-amber-950/40 transition-all flex items-center justify-center gap-2 group/btn cursor-pointer active:scale-95 min-h-[42px] sm:min-h-[38px]"
                           >
                             <span>Ver ubicación</span>
                             <span className="transform group-hover/btn:translate-x-1 transition-transform">→</span>

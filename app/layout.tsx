@@ -1,11 +1,17 @@
 import type { ReactNode } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/context";
 
 export const metadata: Metadata = {
   title: "Biblioteca Digital — Mapa Espacial de Estanterías",
   description: "Digitalización y localización física de libros en estanterías IKEA Kallax",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
