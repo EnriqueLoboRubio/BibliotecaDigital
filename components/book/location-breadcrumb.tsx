@@ -48,7 +48,7 @@ export function LocationBreadcrumb({
       <span className="text-slate-500">›</span>
 
       <span className="px-2.5 py-1 rounded-lg bg-amber-950/60 text-amber-200 border border-amber-700/50 text-xs font-semibold">
-        Posición #{location.position}
+        Posición {location.position}
       </span>
     </nav>
   );

@@ -216,7 +216,7 @@ export function SearchBox({
                                     : "bg-slate-800/90 text-slate-300 border-slate-700"
                                 }`}
                               >
-                                Profundidad {loc.depth} ({isBehind ? "Fondo" : "Frente"})
+                                {isBehind ? "Fila del fondo (detrás)" : "Primera fila (al frente)"}
                               </span>
                             </div>
                           </div>

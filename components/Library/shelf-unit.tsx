@@ -155,11 +155,13 @@ export function ShelfUnit({
           <div className="flex items-center gap-1.5 text-xs text-slate-400">
             <span className="text-slate-600">•</span>
             <span>
-              {shelf.columns}×{shelf.rows} cubos ({totalCubes} espacios)
+              {shelf.rows} filas × {shelf.columns} columnas ({totalCubes} compartimentos)
             </span>
             <span className="text-slate-600">•</span>
             <span className="font-medium text-slate-300">
-              {totalBooksInShelf} {totalBooksInShelf === 1 ? "libro colocado" : "libros colocados"}
+              {totalBooksInShelf === 0
+                ? "Sin libros aún"
+                : `${totalBooksInShelf} ${totalBooksInShelf === 1 ? "libro colocado" : "libros colocados"}`}
             </span>
           </div>
         </div>
@@ -176,7 +178,7 @@ export function ShelfUnit({
                   : "bg-slate-800/90 text-slate-300 hover:bg-slate-750 hover:text-white border border-slate-700/80"
               }`}
             >
-              <span>{isConfigureMode ? "✓ Listo" : "⚙️ Configurar cubos"}</span>
+              <span>{isConfigureMode ? "✓ Listo" : "⚙️ Configurar huecos"}</span>
             </button>
           )}
 
@@ -201,7 +203,7 @@ export function ShelfUnit({
           <div className="flex items-center gap-2">
             <span className="text-base">⚙️</span>
             <span>
-              <strong>Modo configuración de cubos:</strong> Haz clic en cualquier cubo para habilitarlo (Disponible) o deshabilitarlo (No disponible). Si desactivas un cubo con libros, se eliminarán.
+              <strong>Modo de personalización:</strong> Haz clic en cualquier compartimento para habilitarlo (Disponible) o bloquearlo (No disponible para libros). Si bloqueas un hueco con libros, se retirarán de la estantería.
             </span>
           </div>
           <button
@@ -295,10 +297,10 @@ export function ShelfUnit({
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-red-200">
-                    ¿Desactivar Cubo {cellToDisable.cell.row}×{cellToDisable.cell.column}?
+                    ¿Bloquear compartimento de Fila {cellToDisable.cell.row}, Columna {cellToDisable.cell.column}?
                   </h3>
                   <p className="text-xs text-red-300/90 mt-1 leading-relaxed">
-                    Este cubo contiene <strong>{cellToDisable.count} {cellToDisable.count === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>No disponible</em>, todos los libros en su interior serán <strong>eliminados permanentemente</strong>.
+                    Este compartimento contiene <strong>{cellToDisable.count} {cellToDisable.count === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>No disponible</em>, los libros en su interior serán <strong>retirados</strong> de la estantería.
                   </p>
                 </div>
               </div>
@@ -319,7 +321,7 @@ export function ShelfUnit({
                   }}
                   className="px-3.5 py-2 rounded-xl text-xs bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold shadow-md shadow-red-600/30 transition-all"
                 >
-                  Sí, eliminar {cellToDisable.count} {cellToDisable.count === 1 ? "libro" : "libros"} y desactivar
+                  Sí, retirar {cellToDisable.count} {cellToDisable.count === 1 ? "libro" : "libros"} y bloquear
                 </button>
               </div>
             </div>
@@ -333,15 +335,27 @@ export function ShelfUnit({
               {/* Total de libros */}
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200">
                 <span>📚</span>
-                <span className="font-semibold text-white">{totalBooksInShelf}</span>
-                <span className="text-slate-400">{totalBooksInShelf === 1 ? "libro" : "libros"}</span>
+                {totalBooksInShelf === 0 ? (
+                  <span className="text-slate-400">Sin libros</span>
+                ) : (
+                  <>
+                    <span className="font-semibold text-white">{totalBooksInShelf}</span>
+                    <span className="text-slate-400">{totalBooksInShelf === 1 ? "libro" : "libros"}</span>
+                  </>
+                )}
               </div>
 
               {/* Cubos ocupados */}
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200">
                 <span>🗄️</span>
-                <span className="font-semibold text-white">{occupiedCubes}</span>
-                <span className="text-slate-400">de {totalCubes} cubos ocupados</span>
+                {occupiedCubes === 0 ? (
+                  <span className="text-slate-400">Todos los huecos libres ({totalCubes})</span>
+                ) : (
+                  <>
+                    <span className="font-semibold text-white">{occupiedCubes}</span>
+                    <span className="text-slate-400">de {totalCubes} huecos ocupados</span>
+                  </>
+                )}
               </div>
             </div>
 

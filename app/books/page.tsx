@@ -171,18 +171,23 @@ export default function BooksIndexPage() {
                       </td>
 
                       <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono text-slate-300 bg-slate-800 px-2 py-0.5 rounded">
-                            F{book.location.row} · C{book.location.column}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded font-medium ${
-                              isBehind
-                                ? "bg-amber-950/80 text-amber-300 border border-amber-700/60"
-                                : "bg-blue-950/80 text-blue-300 border border-blue-700/60"
-                            }`}
-                          >
-                            {isBehind ? "Detrás" : "Frente"} #{book.location.position}
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold text-slate-200 bg-slate-800 px-2 py-0.5 rounded text-xs">
+                              Fila {book.location.row}, Columna {book.location.column}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded font-semibold text-xs ${
+                                isBehind
+                                  ? "bg-amber-950/80 text-amber-300 border border-amber-700/60"
+                                  : "bg-blue-950/80 text-blue-300 border border-blue-700/60"
+                              }`}
+                            >
+                              {isBehind ? "Fila del fondo" : "Primera fila"} · Posición {book.location.position}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            Coordenada: F{book.location.row}·C{book.location.column}
                           </span>
                         </div>
                       </td>

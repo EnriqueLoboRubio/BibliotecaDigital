@@ -188,7 +188,7 @@ export default function ShelfDetailPage({
               Vista Detallada: {shelf.name}
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
-              Rejilla física Kallax ({shelf.columns}×{shelf.rows} cubos). Haz clic en un cubo para desplegar la profundidad.
+              Distribución física ({shelf.columns * shelf.rows} compartimentos). Haz clic en cualquier hueco para ver sus libros y filas de profundidad.
             </p>
           </div>
 

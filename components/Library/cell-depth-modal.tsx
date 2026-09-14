@@ -67,7 +67,7 @@ export function CellDepthModal({
                 </span>
               </div>
               <h2 id="cell-modal-title" className="text-xl font-bold text-white tracking-tight">
-                Cubo Fila {cell.row} · Columna {cell.column} — No disponible
+                Compartimento no disponible
               </h2>
             </div>
             <button
@@ -89,7 +89,7 @@ export function CellDepthModal({
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">Este cubo está configurado como no disponible</h3>
+              <h3 className="text-sm font-semibold text-white">Este compartimento está bloqueado</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-xs">
                 Actualmente no admite libros. Si lo habilitas, podrás colocar libros tanto al frente como en profundidad.
               </p>
@@ -106,7 +106,7 @@ export function CellDepthModal({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Habilitar este cubo (marcar como disponible)</span>
+                <span>Habilitar compartimento para libros</span>
               </button>
             )}
           </div>
@@ -174,7 +174,7 @@ export function CellDepthModal({
               </span>
             </div>
             <h2 id="cell-modal-title" className="text-xl font-bold tracking-tight text-white">
-              Libros en este Cubo
+              Libros en este compartimento
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Vista en profundidad: los libros del fondo arriba y los del frente abajo.
@@ -203,10 +203,10 @@ export function CellDepthModal({
               </div>
               <div>
                 <h4 className="text-sm font-bold text-red-200">
-                  ¿Desactivar este cubo y eliminar sus libros?
+                  ¿Bloquear este compartimento y retirar sus libros?
                 </h4>
                 <p className="text-xs text-red-300/90 mt-1 leading-relaxed">
-                  Este cubo contiene <strong>{cellBooks.length} {cellBooks.length === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>No disponible</em>, todos los libros en su interior serán <strong>eliminados permanentemente</strong> de la biblioteca física.
+                  Este compartimento contiene <strong>{cellBooks.length} {cellBooks.length === 1 ? "libro" : "libros"}</strong>. Al marcarlo como <em>No disponible</em>, todos los libros en su interior serán <strong>retirados</strong> de la estantería física.
                 </p>
               </div>
             </div>
@@ -223,27 +223,27 @@ export function CellDepthModal({
                 onClick={handleConfirmDisable}
                 className="px-3 py-1.5 rounded-lg text-xs bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold shadow-md shadow-red-600/30 transition-all"
               >
-                Sí, eliminar {cellBooks.length} {cellBooks.length === 1 ? "libro" : "libros"} y desactivar
+                Sí, retirar {cellBooks.length} {cellBooks.length === 1 ? "libro" : "libros"} y bloquear
               </button>
             </div>
           </div>
         )}
 
-        {/* Barra de control de estado del cubo y capacidades */}
+        {/* Barra de control de estado del compartimento y capacidades */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium">Estado físico:</span>
+            <span className="text-xs text-slate-300 font-medium">Estado:</span>
             <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-950/80 border border-emerald-800/80 text-emerald-300">
-              ✓ Habilitado
+              ✓ Disponible
             </span>
             {isAdmin && onToggleCellEnabled && !showConfirmDisable && (
               <button
                 type="button"
                 onClick={handleStartDisable}
                 className="text-xs text-slate-400 hover:text-red-400 hover:underline transition-colors ml-1"
-                title="Desactivar cubo (marcar no disponible)"
+                title="Bloquear compartimento para otros usos"
               >
-                (Marcar como no disponible)
+                (Bloquear para otros usos)
               </button>
             )}
           </div>
@@ -258,7 +258,7 @@ export function CellDepthModal({
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>+ Añadir espacio al fondo</span>
+                <span>+ Añadir fila al fondo</span>
               </button>
 
               {cell.depthCount > 1 && booksAtDepth(cellBooks, cell, cell.depthCount).length === 0 && (
@@ -268,7 +268,7 @@ export function CellDepthModal({
                   className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all"
                   title="Eliminar fila vacía del fondo"
                 >
-                  - Reducir fondo
+                  - Quitar fila del fondo
                 </button>
               )}
             </div>
@@ -301,10 +301,12 @@ export function CellDepthModal({
                           : "bg-slate-800/90 text-slate-300 border border-slate-700/80"
                       }`}
                     >
-                      {isFront ? "Frente (primera fila)" : label}
+                      {isFront ? "Primera fila (al frente)" : label}
                     </span>
                     <span className="text-xs text-slate-400">
-                      {depthBooks.length} {depthBooks.length === 1 ? "libro" : "libros"}
+                      {depthBooks.length === 0
+                        ? "Sin libros"
+                        : `${depthBooks.length} ${depthBooks.length === 1 ? "libro" : "libros"}`}
                     </span>
                   </div>
 
@@ -332,20 +334,20 @@ export function CellDepthModal({
                             dimmed={Boolean(
                               highlightedBookId && highlightedBookId !== book.id,
                             )}
-                            locationLabel={`Posición #${book.location.position}`}
+                            locationLabel={`Posición ${book.location.position}`}
                             onSelect={onSelectBook}
                           />
                         </div>
-                        <span className="text-[10px] font-mono text-slate-400 font-medium">
-                          #{book.location.position}
+                        <span className="text-[10px] text-slate-400 font-medium" title={`Posición ${book.location.position}`}>
+                          {book.location.position}
                         </span>
                       </div>
                     ))
                   ) : (
                     <div className="w-full flex flex-col items-center justify-center py-6 text-slate-400">
-                      <span className="text-xs font-medium">Fila de profundidad vacía</span>
+                      <span className="text-xs font-medium">Fila sin libros</span>
                       <span className="text-[10px] text-slate-400 mt-1">
-                        No hay libros colocados en la {label.toLowerCase()}
+                        No hay libros colocados en esta fila
                       </span>
                     </div>
                   )}
@@ -358,7 +360,7 @@ export function CellDepthModal({
         {/* Pie del modal */}
         <div className="flex items-center justify-between border-t border-slate-800 pt-4 text-xs text-slate-400">
           <span>
-            Total en este cubo: <strong className="text-slate-200">{cellBooks.length} libros</strong> en {cell.depthCount} filas de profundidad
+            Total: <strong className="text-slate-200">{cellBooks.length === 0 ? "Sin libros" : `${cellBooks.length} ${cellBooks.length === 1 ? "libro" : "libros"}`}</strong> en {cell.depthCount === 1 ? "1 fila" : `${cell.depthCount} filas`} de profundidad
           </span>
           <button
             type="button"

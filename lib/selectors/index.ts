@@ -61,6 +61,6 @@ export function resolveLocation(
     depth: location.depth,
     position: location.position,
     depthLabel: label,
-    phrase: `${shelf.name}, cubo ${location.row}×${location.column}, ${label.toLowerCase()}, posición ${location.position}`,
+    phrase: `${shelf.name}, Fila ${location.row}, Columna ${location.column} · ${label.toLowerCase()}, posición ${location.position}`,
   };
 }

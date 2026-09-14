@@ -125,7 +125,7 @@ export function AddBookModal({
     }
 
     if (isCellDisabled) {
-      setError(`El cubo Fila ${row} × Columna ${column} está marcado como sin uso físico.`);
+      setError(`El compartimento en la fila ${row}, columna ${column} no está disponible para colocar libros.`);
       return;
     }
 
@@ -432,16 +432,16 @@ export function AddBookModal({
               {/* Validación visual de la celda elegida */}
               <div className="mt-3 p-2.5 rounded-lg bg-slate-950/70 border border-slate-800 flex items-center justify-between">
                 <span className="text-slate-400">
-                  Ubicación: <strong className="text-white">Cubo {row}×{column}, {depth === 1 ? "Frente" : `Profundidad ${depth}`}, Posición #{nextPosition}</strong>
+                  Ubicación: <strong className="text-white">Fila {row}, Columna {column} · {depth === 1 ? "Primera fila (frente)" : `Fila del fondo (${depth})`} · Posición {nextPosition}</strong>
                 </span>
 
                 {isCellDisabled ? (
                   <span className="text-[10px] font-bold text-red-400 bg-red-950 px-2 py-0.5 rounded border border-red-800">
-                    Cubo sin uso
+                    No disponible
                   </span>
                 ) : (
                   <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
-                    Cubo disponible
+                    Disponible
                   </span>
                 )}
               </div>

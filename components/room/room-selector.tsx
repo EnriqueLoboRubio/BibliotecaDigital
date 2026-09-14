@@ -127,7 +127,9 @@ export function RoomSelector({
                       isActive ? "bg-black/30 text-amber-200" : "bg-slate-800 text-slate-400"
                     }`}
                   >
-                    {roomShelves.length} {roomShelves.length === 1 ? "mueble" : "muebles"}
+                    {roomShelves.length === 0
+                      ? "Sin muebles"
+                      : `${roomShelves.length} ${roomShelves.length === 1 ? "mueble" : "muebles"}`}
                   </span>
                   {roomBooksCount > 0 && (
                     <span

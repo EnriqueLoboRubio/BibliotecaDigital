@@ -143,12 +143,16 @@ export default function ShelvesIndexPage() {
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                      ID: {shelf.id}
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                      Estantería
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">
-                      Posición #{shelf.position}
-                    </span>
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span>Orden: {shelf.position}</span>
+                      <span className="text-slate-600">•</span>
+                      <span className="text-[10px] font-mono text-slate-500" title={`Identificador del sistema: ${shelf.id}`}>
+                        {shelf.id}
+                      </span>
+                    </div>
                   </div>
 
                   {isEditing ? (
@@ -204,7 +208,7 @@ export default function ShelvesIndexPage() {
                   )}
 
                   <p className="text-xs text-slate-400 mt-1">
-                    Estantería modular de {shelf.columns} columnas × {shelf.rows} filas ({shelf.columns * shelf.rows} cubos).
+                    Estantería modular de {shelf.columns} columnas × {shelf.rows} filas ({shelf.columns * shelf.rows} compartimentos).
                   </p>
 
                   {/* Métricas del mueble */}
@@ -223,7 +227,7 @@ export default function ShelvesIndexPage() {
                         {enabledCells}
                       </span>
                       <span className="text-[10px] text-slate-400 uppercase tracking-wider">
-                        Cubos Útiles
+                        Disponibles
                       </span>
                     </div>
 
@@ -232,7 +236,7 @@ export default function ShelvesIndexPage() {
                         {disabledCells}
                       </span>
                       <span className="text-[10px] text-slate-400 uppercase tracking-wider">
-                        Sin Uso
+                        Bloqueados
                       </span>
                     </div>
                   </div>

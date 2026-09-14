@@ -513,7 +513,7 @@ export default function HomePage() {
                   ? "Tu biblioteca física está lista. Haz clic en cualquier compartimento para colocar libros o utiliza los botones de acción para comenzar."
                   : viewMode === "room"
                     ? "Distribución espacial de muebles en la estancia. Pulsa en cualquier estantería para enfocarla."
-                    : "Haz clic en cualquier cubo para ver sus libros y niveles de profundidad, o busca abajo por título, autor o ISBN."}
+                    : "Haz clic en cualquier compartimento para ver sus libros y filas de profundidad, o busca por título, autor o ISBN."}
               </p>
             </div>
 
@@ -523,15 +523,27 @@ export default function HomePage() {
                 {/* Libros */}
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200 shadow-sm">
                   <span>📚</span>
-                  <strong className="text-white font-semibold">{activeShelfBooks.length}</strong>
-                  <span className="text-slate-400">{activeShelfBooks.length === 1 ? "libro" : "libros"}</span>
+                  {activeShelfBooks.length === 0 ? (
+                    <span className="text-slate-400">Sin libros</span>
+                  ) : (
+                    <>
+                      <strong className="text-white font-semibold">{activeShelfBooks.length}</strong>
+                      <span className="text-slate-400">{activeShelfBooks.length === 1 ? "libro" : "libros"}</span>
+                    </>
+                  )}
                 </div>
 
                 {/* Cubos ocupados */}
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-850 border border-slate-750 text-slate-200 shadow-sm">
                   <span>🗄️</span>
-                  <strong className="text-white font-semibold">{activeShelfOccupiedCells}</strong>
-                  <span className="text-slate-400">de {activeShelfTotalCells} cubos ocupados</span>
+                  {activeShelfOccupiedCells === 0 ? (
+                    <span className="text-slate-400">Todos los huecos libres ({activeShelfTotalCells})</span>
+                  ) : (
+                    <>
+                      <strong className="text-white font-semibold">{activeShelfOccupiedCells}</strong>
+                      <span className="text-slate-400">de {activeShelfTotalCells} huecos con libros</span>
+                    </>
+                  )}
                 </div>
 
                 {/* Porcentaje de ocupación con barra de progreso */}

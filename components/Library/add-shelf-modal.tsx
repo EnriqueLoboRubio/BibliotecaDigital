@@ -243,23 +243,23 @@ export function AddShelfModal({
             </div>
           </div>
 
-          {/* Configuración interactiva de cubos útiles y sin uso */}
+          {/* Configuración interactiva de compartimentos disponibles y bloqueados */}
           <div className="border border-slate-800 rounded-xl bg-slate-950/80 p-4 flex flex-col gap-3">
             <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div>
-                <span className="text-slate-200 font-semibold block">Configuración de cubos:</span>
+                <span className="text-slate-200 font-semibold block">Distribución de compartimentos:</span>
                 <span className="text-[11px] text-slate-400">
-                  Haz clic en cualquier cubo para marcarlo como <strong>Útil</strong> o <strong>Sin uso</strong>.
+                  Haz clic en cualquier hueco para marcarlo como <strong>Disponible</strong> o <strong>Bloqueado</strong> (para cajas, adornos u objetos).
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="px-2 py-0.5 rounded bg-emerald-950/70 border border-emerald-700/60 text-emerald-300 text-[11px] font-medium">
-                  {totalCubes - disabledKeys.size} útiles
+                  {totalCubes - disabledKeys.size} disponibles
                 </span>
                 {disabledKeys.size > 0 && (
                   <span className="px-2 py-0.5 rounded bg-amber-950/70 border border-amber-700/60 text-amber-300 text-[11px] font-medium">
-                    {disabledKeys.size} sin uso
+                    {disabledKeys.size} bloqueados
                   </span>
                 )}
               </div>
@@ -268,7 +268,7 @@ export function AddShelfModal({
             {/* Acciones rápidas */}
             <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-900 text-[11px]">
               <span className="text-slate-500">
-                {columns} col × {rows} filas ({totalCubes} cubos)
+                {columns} columnas × {rows} filas ({totalCubes} compartimentos)
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -276,7 +276,7 @@ export function AddShelfModal({
                   onClick={handleSetAllUseful}
                   className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors"
                 >
-                  Todos útiles
+                  Habilitar todos
                 </button>
                 <button
                   type="button"
@@ -310,7 +310,7 @@ export function AddShelfModal({
                         key={idx}
                         type="button"
                         onClick={() => toggleCell(r, c)}
-                        title={`Cubo fila ${r}, columna ${c}: ${isDisabled ? "Sin uso (haz clic para activar)" : "Útil (haz clic para desactivar)"}`}
+                        title={`Fila ${r}, Columna ${c}: ${isDisabled ? "Bloqueado (haz clic para habilitar)" : "Disponible (haz clic para bloquear)"}`}
                         className={`aspect-square rounded p-1 flex flex-col items-center justify-center text-center transition-all cursor-pointer shadow-inner select-none ${
                           isDisabled
                             ? "bg-slate-900/80 pattern-disabled border border-slate-800 opacity-70 hover:opacity-100 hover:border-slate-600"
@@ -322,14 +322,14 @@ export function AddShelfModal({
                             isDisabled ? "text-slate-400" : "text-emerald-400"
                           }`}
                         >
-                          {r}×{c}
+                          {r}·{c}
                         </span>
                         <span
                           className={`text-[8px] font-semibold mt-0.5 uppercase tracking-tighter leading-none ${
                             isDisabled ? "text-slate-400" : "text-emerald-300"
                           }`}
                         >
-                          {isDisabled ? "Sin uso" : "Útil"}
+                          {isDisabled ? "Bloqueado" : "Libre"}
                         </span>
                       </button>
                     );

@@ -155,7 +155,7 @@ export default function BookDetailPage({
 
             <div className="rounded-xl bg-slate-950/80 border border-slate-800 p-3.5 mt-1">
               <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">
-                Frase canónica:
+                Ubicación física exacta:
               </span>
               <p className="text-sm font-medium text-amber-200">
                 «{location.phrase}»

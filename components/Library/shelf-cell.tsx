@@ -57,12 +57,12 @@ export function ShelfCellView({
 
   // Etiqueta accesible según el estado
   const accessibleLabel = !cell.enabled
-    ? `Cubo fila ${cell.row}, columna ${cell.column}: No disponible.`
+    ? `Compartimento en fila ${cell.row}, columna ${cell.column}: No disponible para libros.`
     : isCellActive
-      ? `Cubo fila ${cell.row}, columna ${cell.column}: Seleccionado, ${totalBooks > 0 ? `${totalBooks} libros` : "disponible"}.`
+      ? `Compartimento en fila ${cell.row}, columna ${cell.column}: Seleccionado, ${totalBooks > 0 ? `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}` : "disponible"}.`
       : isEmpty
-        ? `Cubo fila ${cell.row}, columna ${cell.column}: Disponible, vacío.`
-        : `Cubo fila ${cell.row}, columna ${cell.column}: ${totalBooks} libros${hasMultipleDepths ? `, ${behind} en profundidad` : ""}.`;
+        ? `Compartimento en fila ${cell.row}, columna ${cell.column}: Vacío y disponible.`
+        : `Compartimento en fila ${cell.row}, columna ${cell.column}: ${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}${hasMultipleDepths ? `, ${behind} en fila de fondo` : ""}.`;
 
   // ---------------------------------------------------------------------------
   // ESTADO 5: Cubo no disponible (desactivado / sin uso)
@@ -98,13 +98,13 @@ export function ShelfCellView({
           ${isConfigureMode ? "ring-2 ring-emerald-500/60 hover:ring-emerald-400 border-emerald-500/50" : ""}
         `}
       >
-        {/* Coordenada sutil en reposo / destacada en hover */}
+        {/* Identificador sutil en reposo / detallado en hover */}
         <div className="w-full flex items-center justify-between text-[10px] text-slate-500 pointer-events-none">
-          <span className="opacity-60 text-[9px] font-mono">
-            {cell.row}·{cell.column}
-          </span>
           <span className="text-[10px] text-slate-500 group-hover:text-slate-400 transition-colors">
-            Bloqueado
+            No disponible
+          </span>
+          <span className="text-[9px] text-slate-500/80 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+            Fila {cell.row} · Col. {cell.column}
           </span>
         </div>
 
@@ -112,7 +112,7 @@ export function ShelfCellView({
         <div className="flex flex-col items-center justify-center my-auto text-center pointer-events-none">
           {isConfigureMode ? (
             <span className="text-[10px] sm:text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 shadow-md">
-              + Habilitar cubo
+              + Habilitar compartimento
             </span>
           ) : (
             <div className="flex flex-col items-center gap-1.5 opacity-60 group-hover:opacity-90 transition-opacity">
@@ -178,43 +178,46 @@ export function ShelfCellView({
       {/* 1. CABECERA DEL COMPARTIMENTO (Despejada en reposo / HUD en Hover)    */}
       {/* --------------------------------------------------------------------- */}
       <div className="relative w-full px-2 pt-1.5 pb-1 z-20 pointer-events-none flex items-center justify-between min-h-[22px]">
-        {/* Vista en Reposo: Identificación espacial sobria y conteo minimalista */}
+        {/* Vista en Reposo: Identificación sobria y conteo */}
         <div className="w-full flex items-center justify-between group-hover:hidden transition-opacity duration-200">
-          {/* Identificador discreto de coordenada (esquina superior izquierda) */}
-          <span className="text-[9px] font-mono font-medium text-slate-500/80">
-            {cell.row}·{cell.column}
+          <span className="sr-only">
+            Fila {cell.row}, Columna {cell.column}
           </span>
 
-          {/* Indicador de estado minimalista (solo si está ocupado o seleccionado) */}
+          {/* Indicador de estado (solo si está ocupado o seleccionado) */}
           {isCellActive ? (
-            <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-amber-300 bg-amber-950/80 border border-amber-500/50 px-1.5 py-0.2 rounded shadow-sm">
+            <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-amber-300 bg-amber-950/80 border border-amber-500/50 px-1.5 py-0.5 rounded shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              <span>{isOccupied ? `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}` : "Abierto"}</span>
+              <span>{isOccupied ? `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}` : "Seleccionado"}</span>
             </span>
           ) : isOccupied ? (
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] font-semibold text-slate-300 bg-slate-900/80 border border-slate-700/60 px-1.5 py-0.2 rounded shadow-sm">
+            <div className="flex items-center gap-1 ml-auto">
+              <span className="text-[9px] font-semibold text-slate-300 bg-slate-900/80 border border-slate-700/60 px-1.5 py-0.5 rounded shadow-sm">
                 {totalBooks} {totalBooks === 1 ? "libro" : "libros"}
               </span>
               {hasMultipleDepths && (
                 <span
-                  className="text-[9px] font-bold text-amber-400 bg-amber-950/90 border border-amber-600/60 px-1 py-0.2 rounded shadow-sm"
-                  title={`${behind} libros en el fondo`}
+                  className="text-[9px] font-bold text-amber-400 bg-amber-950/90 border border-amber-600/60 px-1.5 py-0.5 rounded shadow-sm"
+                  title={`${behind} libros en la fila del fondo`}
                 >
-                  +{behind}
+                  +{behind} fondo
                 </span>
               )}
             </div>
-          ) : null /* Si está vacío, se mantiene totalmente despejado en reposo para máxima sensación física de nicho */}
+          ) : null}
         </div>
 
-        {/* Vista en Hover: HUD contextual elegante y útil con transición suave */}
+        {/* Vista en Hover: Información clara de ubicación y contenido */}
         <div className="hidden group-hover:flex items-center justify-between w-full transition-all duration-300 ease-out">
           <span className="text-[10px] font-bold text-amber-300 bg-slate-950/90 border border-amber-500/50 px-2 py-0.5 rounded shadow-md backdrop-blur-sm">
-            Fila {cell.row} · Col. {cell.column}
+            Fila {cell.row} · Columna {cell.column}
           </span>
           <span className="text-[9px] font-semibold text-slate-200 bg-slate-900/90 border border-slate-700 px-1.5 py-0.5 rounded shadow-sm backdrop-blur-sm">
-            {isOccupied ? (hasMultipleDepths ? `${totalBooks} (${behind} fondo)` : `${totalBooks} libros`) : "Disponible"}
+            {isOccupied
+              ? hasMultipleDepths
+                ? `${totalBooks} libros (${behind} detrás)`
+                : `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}`
+              : "Disponible"}
           </span>
         </div>
       </div>

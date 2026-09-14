@@ -325,9 +325,9 @@ export function BarcodeScannerModal({
                     onChange={handleCameraChange}
                     className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-blue-500"
                   >
-                    {cameras.map((c) => (
+                    {cameras.map((c, idx) => (
                       <option key={c.id} value={c.id}>
-                        {c.label || `Cámara ${c.id.substring(0, 5)}`}
+                        {c.label || `Cámara ${idx + 1}`}
                       </option>
                     ))}
                   </select>

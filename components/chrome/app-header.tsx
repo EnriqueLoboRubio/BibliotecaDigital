@@ -48,7 +48,13 @@ export function AppHeader({ title, currentLocation, bookCount, onAddBook }: AppH
                     <>
                       <span className="hidden sm:inline text-slate-600">•</span>
                       <span className="hidden sm:inline text-slate-400">
-                        <strong className="text-slate-200">{bookCount}</strong> {bookCount === 1 ? "libro" : "libros"}
+                        {bookCount === 0 ? (
+                          "Sin libros aún"
+                        ) : (
+                          <>
+                            <strong className="text-slate-200">{bookCount}</strong> {bookCount === 1 ? "libro" : "libros"}
+                          </>
+                        )}
                       </span>
                     </>
                   )}
