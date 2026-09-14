@@ -13,3 +13,11 @@ export type {
   ShelfDensity,
   ShelfUnitProps,
 } from "./ui";
+export type {
+  BoundingBox,
+  CandidateConfidence,
+  DigitizationCandidate,
+  DigitizeCubeRequest,
+  DigitizeCubeResponse,
+  SuggestedBookData,
+} from "./digitize";
