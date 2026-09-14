@@ -160,7 +160,7 @@ export function SearchBox({
                 </span>
               </div>
 
-              <ul className="max-h-80 overflow-y-auto divide-y divide-slate-800/70" role="listbox">
+              <ul className="max-h-84 overflow-y-auto divide-y divide-slate-800/80" role="listbox">
                 {results.map((hit) => {
                   const loc = resolveLocationInfo
                     ? resolveLocationInfo(hit)
@@ -177,53 +177,60 @@ export function SearchBox({
 
                   return (
                     <li key={hit.book.id} role="option" aria-selected={false}>
-                      <div className="p-3.5 hover:bg-slate-850/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
-                        {/* Datos bibliográficos */}
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors truncate">
-                            {hit.book.title}
-                          </h4>
-                          <p className="text-xs text-slate-300 mt-0.5">
-                            {hit.book.author}
-                          </p>
-                          {hit.book.isbn && (
-                            <p className="text-[11px] font-mono text-slate-500 mt-0.5">
-                              ISBN: {hit.book.isbn}
+                      <div className="p-4 hover:bg-slate-850/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 group border-l-2 border-transparent hover:border-amber-400">
+                        {/* Datos bibliográficos y Ubicación */}
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div>
+                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                              {hit.book.title}
+                            </h4>
+                            <p className="text-xs text-slate-300 mt-0.5">
+                              {hit.book.author}
                             </p>
-                          )}
+                            {hit.book.isbn && (
+                              <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                                ISBN: <span className="text-slate-300">{hit.book.isbn}</span>
+                              </p>
+                            )}
+                          </div>
 
-                          {/* Ubicación física detallada */}
-                          <div className="flex flex-wrap items-center gap-1.5 mt-2 text-[11px]">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                              📍 {loc.roomName}
+                          {/* Bloque estructurado de Ubicación Física */}
+                          <div className="pt-2 border-t border-slate-800/80">
+                            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+                              Ubicación:
                             </span>
-                            <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                              🗄️ {loc.shelfName}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-200 border border-amber-600/50 font-medium">
-                              Fila {loc.row} · Columna {loc.column}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded-md font-medium border ${
-                                isBehind
-                                  ? "bg-amber-950 text-amber-300 border-amber-700/60"
-                                  : "bg-slate-800/80 text-slate-300 border-slate-700"
-                              }`}
-                            >
-                              Profundidad {loc.depth} ({isBehind ? "Fondo" : "Frente"})
-                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium">
+                                📍 {loc.roomName}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium">
+                                🗄️ {loc.shelfName}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-md bg-amber-950/90 text-amber-200 border border-amber-600/60 font-semibold">
+                                Fila {loc.row} · Columna {loc.column}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-md font-semibold border ${
+                                  isBehind
+                                    ? "bg-amber-950 text-amber-300 border-amber-700/60"
+                                    : "bg-slate-800/90 text-slate-300 border-slate-700"
+                                }`}
+                              >
+                                Profundidad {loc.depth} ({isBehind ? "Fondo" : "Frente"})
+                              </span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Botón de acción: Ver ubicación */}
-                        <div className="shrink-0 flex sm:flex-col items-end justify-center">
+                        <div className="shrink-0 flex items-center">
                           <button
                             type="button"
                             onClick={() => handleSelect(hit)}
-                            className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl text-xs font-semibold text-amber-300 bg-amber-950/60 hover:bg-amber-600 hover:text-white border border-amber-500/50 shadow-sm transition-all flex items-center justify-center gap-1.5 group/btn"
+                            className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-amber-300 bg-amber-950/70 hover:bg-amber-600 hover:text-white border border-amber-500/60 shadow-md shadow-amber-950/40 transition-all flex items-center justify-center gap-2 group/btn cursor-pointer active:scale-95"
                           >
                             <span>Ver ubicación</span>
-                            <span className="transform group-hover/btn:translate-x-0.5 transition-transform">→</span>
+                            <span className="transform group-hover/btn:translate-x-1 transition-transform">→</span>
                           </button>
                         </div>
                       </div>
