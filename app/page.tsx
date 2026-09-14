@@ -28,6 +28,7 @@ import { AppHeader } from "@/components/chrome";
 import { SearchBox } from "@/components/Search";
 import { BookDetail, AddBookModal, EditBookModal } from "@/components/book";
 import { CreateRoomModal, FloorPlant, RoomSelector, WallArt } from "@/components/room";
+import { ShelfDigitizationModal } from "@/components/digitize";
 import { useAuth } from "@/lib/auth/context";
 
 export default function HomePage() {
@@ -54,6 +55,8 @@ export default function HomePage() {
   const [isCreateRoomModalOpen, setIsCreateRoomModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [addLocation, setAddLocation] = useState<{ row: number; column: number; depth: number } | undefined>();
+  const [isDigitizeModalOpen, setIsDigitizeModalOpen] = useState(false);
+  const [digitizeInitialCell, setDigitizeInitialCell] = useState<{ row: number; column: number; depth: number } | undefined>();
   const [, startTransition] = useTransition();
 
   // Carga inicial del catálogo y detección de ?book= en URL
@@ -248,6 +251,22 @@ export default function HomePage() {
       setCatalog((prev) => ({ ...prev, books: updatedBooks }));
       if (selectedBookId === bookId) setSelectedBookId(undefined);
       if (highlightedBookId === bookId) setHighlightedBookId(undefined);
+    });
+  };
+
+  // Integrar libros confirmados por el usuario desde la digitalización con IA
+  const handleConfirmDigitizedBooks = (newBooks: Book[]) => {
+    startTransition(() => {
+      const updatedBooks = [...books, ...newBooks];
+      setBooks(updatedBooks);
+      saveBooksToStorage(updatedBooks);
+      setCatalog((prev) => ({
+        ...prev,
+        books: updatedBooks,
+      }));
+      if (newBooks.length > 0) {
+        setHighlightedBookId(newBooks[0].id);
+      }
     });
   };
 
@@ -591,7 +610,7 @@ export default function HomePage() {
                 )}
 
                 {/* Botones de acción integrados directamente en el dashboard */}
-                <div className="flex items-center gap-2 ml-auto sm:ml-0 pt-1 sm:pt-0">
+                <div className="flex flex-wrap items-center gap-2 ml-auto sm:ml-0 pt-1 sm:pt-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -602,6 +621,20 @@ export default function HomePage() {
                   >
                     <span>+ Añadir libro</span>
                   </button>
+
+                  {activeShelf && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDigitizeInitialCell(undefined);
+                        setIsDigitizeModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-amber-500/40 hover:border-amber-400 shadow-md shadow-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                      title="Digitalizar estantería o compartimento mediante fotografía e IA"
+                    >
+                      <span>📸 Digitalizar con IA</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -938,6 +971,11 @@ export default function HomePage() {
           setAddLocation({ row, column, depth });
           setIsAddModalOpen(true);
         }}
+        onDigitizeCell={(row, column, depth) => {
+          setDigitizeInitialCell({ row, column, depth });
+          setIsDigitizeModalOpen(true);
+          setInspectingCell(null);
+        }}
         onUpdateDepthCount={isAdmin ? handleUpdateCellDepthCount : undefined}
         onToggleCellEnabled={isAdmin ? handleToggleCellEnabled : undefined}
       />
@@ -994,6 +1032,19 @@ export default function HomePage() {
         onClose={() => setIsCreateRoomModalOpen(false)}
         onCreateRoom={handleCreateRoom}
       />
+
+      {/* Modal para digitalización de estantería o cubo con IA */}
+      {isDigitizeModalOpen && activeShelf && (
+        <ShelfDigitizationModal
+          isOpen={isDigitizeModalOpen}
+          onClose={() => setIsDigitizeModalOpen(false)}
+          shelf={activeShelf}
+          cells={catalog.cells}
+          existingBooks={books}
+          initialCell={digitizeInitialCell}
+          onConfirmBooks={handleConfirmDigitizedBooks}
+        />
+      )}
     </div>
   );
 }

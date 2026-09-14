@@ -13,6 +13,7 @@ interface CellDepthModalProps {
   onClose: () => void;
   onSelectBook: (bookId: string) => void;
   onAddBookToCell?: (row: number, column: number, depth: number) => void;
+  onDigitizeCell?: (row: number, column: number, depth: number) => void;
   onUpdateDepthCount?: (cellId: string, newDepthCount: number) => void;
   onToggleCellEnabled?: (cell: ShelfCell, enabled: boolean) => void;
 }
@@ -26,6 +27,7 @@ export function CellDepthModal({
   onClose,
   onSelectBook,
   onAddBookToCell,
+  onDigitizeCell,
   onUpdateDepthCount,
   onToggleCellEnabled,
 }: CellDepthModalProps) {
@@ -310,15 +312,28 @@ export function CellDepthModal({
                     </span>
                   </div>
 
-                  {canEdit && onAddBookToCell && (
-                    <button
-                      type="button"
-                      onClick={() => onAddBookToCell(cell.row, cell.column, d)}
-                      className="text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/60 px-3 py-1.5 rounded-xl border border-amber-700/50 transition-colors flex items-center justify-center gap-1.5 shadow-sm min-h-[36px] self-start sm:self-auto"
-                    >
-                      <span>+ Colocar libro aquí</span>
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    {onDigitizeCell && (
+                      <button
+                        type="button"
+                        onClick={() => onDigitizeCell(cell.row, cell.column, d)}
+                        className="text-xs font-medium text-slate-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 px-2.5 py-1.5 rounded-xl border border-slate-700/80 transition-colors flex items-center justify-center gap-1 shadow-sm min-h-[36px]"
+                        title="Digitalizar este compartimento con foto e IA"
+                      >
+                        <span>📸 Escanear con IA</span>
+                      </button>
+                    )}
+
+                    {canEdit && onAddBookToCell && (
+                      <button
+                        type="button"
+                        onClick={() => onAddBookToCell(cell.row, cell.column, d)}
+                        className="text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/60 px-3 py-1.5 rounded-xl border border-amber-700/50 transition-colors flex items-center justify-center gap-1.5 shadow-sm min-h-[36px]"
+                      >
+                        <span>+ Colocar libro</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Balda gráfica con los libros alineados horizontalmente */}

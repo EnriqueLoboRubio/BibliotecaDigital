@@ -16,8 +16,13 @@ export type {
 export type {
   BoundingBox,
   CandidateConfidence,
+  DetectedObjectType,
   DigitizationCandidate,
   DigitizeCubeRequest,
   DigitizeCubeResponse,
+  DigitizeShelfRequest,
+  DigitizeShelfResponse,
+  EnabledCellSlot,
+  ExistingBookSlot,
   SuggestedBookData,
 } from "./digitize";
