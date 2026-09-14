@@ -140,29 +140,47 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-/* Animación de localización elegante para "Ver ubicación" */
+/* Animación de localización rápida, sobria y elegante para "Ver ubicación" */
 @keyframes kallax-locate-beacon {
   0% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.9), inset 0 0 20px rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.9), inset 0 0 15px rgba(245, 158, 11, 0.4);
     transform: scale(1);
   }
-  40% {
-    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.5), inset 0 0 35px rgba(245, 158, 11, 0.85);
-    transform: scale(1.025);
+  35% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.45), inset 0 0 25px rgba(245, 158, 11, 0.65);
+    transform: scale(1.015);
+  }
+  70% {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25), inset 0 0 18px rgba(245, 158, 11, 0.35);
+    transform: scale(1.008);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0), inset 0 0 20px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.75), 0 6px 20px -4px rgba(245, 158, 11, 0.25), inset 0 0 16px rgba(245, 158, 11, 0.1);
     transform: scale(1);
   }
 }
 
 .kallax-locate-beacon {
-  animation: kallax-locate-beacon 1.4s cubic-bezier(0.25, 1, 0.5, 1) 2;
+  animation: kallax-locate-beacon 1.6s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+  border-color: #f59e0b !important;
   z-index: 25 !important;
+}
+
+/* Resaltado permanente discreto una vez completado el pulso inicial */
+.kallax-locate-settled {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.75), 0 6px 20px -4px rgba(245, 158, 11, 0.25), inset 0 0 16px rgba(245, 158, 11, 0.1) !important;
+  z-index: 20 !important;
 }
 
 /* Respeto a accesibilidad y movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
+  .kallax-locate-beacon {
+    animation: none !important;
+    transform: none !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 2px #f59e0b !important;
+  }
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

@@ -29,13 +29,16 @@ export function ShelfCellView({
   );
   const totalBooks = allCellBooks.length;
 
-  // Estados visuales del cubo
-  const hasHighlightedBook = books.some(
+  // Libro resaltado por búsqueda en este cubo (si corresponde)
+  const highlightedBook = books.find(
     (b) =>
       b.id === highlightedBookId &&
       b.location.row === cell.row &&
       b.location.column === cell.column,
   );
+  const hasHighlightedBook = Boolean(highlightedBook);
+  const isHighlightedBehind = highlightedBook ? highlightedBook.location.depth > 1 : false;
+
 
   const hasSelectedBook = books.some(
     (b) =>
@@ -55,14 +58,16 @@ export function ShelfCellView({
   const isOccupied = cell.enabled && totalBooks > 0;
   const hasMultipleDepths = cell.enabled && behind > 0;
 
-  // Etiqueta accesible según el estado
+  // Etiqueta accesible precisa con localización de profundidad
   const accessibleLabel = !cell.enabled
     ? `Compartimento en fila ${cell.row}, columna ${cell.column}: No disponible para libros.`
-    : isCellActive
-      ? `Compartimento en fila ${cell.row}, columna ${cell.column}: Seleccionado, ${totalBooks > 0 ? `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}` : "disponible"}.`
-      : isEmpty
-        ? `Compartimento en fila ${cell.row}, columna ${cell.column}: Vacío y disponible.`
-        : `Compartimento en fila ${cell.row}, columna ${cell.column}: ${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}${hasMultipleDepths ? `, ${behind} en fila de fondo` : ""}.`;
+    : highlightedBook
+      ? `Compartimento en fila ${cell.row}, columna ${cell.column}: Libro localizado «${highlightedBook.title}» colocado en ${isHighlightedBehind ? "fila del fondo (detrás)" : "primera fila (al frente)"}, posición ${highlightedBook.location.position}.`
+      : isCellActive
+        ? `Compartimento en fila ${cell.row}, columna ${cell.column}: Seleccionado, ${totalBooks > 0 ? `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}` : "disponible"}.`
+        : isEmpty
+          ? `Compartimento en fila ${cell.row}, columna ${cell.column}: Vacío y disponible.`
+          : `Compartimento en fila ${cell.row}, columna ${cell.column}: ${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}${hasMultipleDepths ? `, ${behind} en fila de fondo` : ""}.`;
 
   // ---------------------------------------------------------------------------
   // ESTADO 5: Cubo no disponible (desactivado / sin uso)
@@ -147,6 +152,7 @@ export function ShelfCellView({
 
   return (
     <div
+      key={highlightedBook ? `located-${highlightedBook.id}` : undefined}
       id={`shelf-cell-${cell.row}-${cell.column}`}
       role="region"
       aria-label={accessibleLabel}
@@ -163,7 +169,7 @@ export function ShelfCellView({
         transition-all duration-300 ease-out select-none kallax-compartment-recess
         ${
           hasHighlightedBook
-            ? "kallax-locate-beacon ring-2 ring-amber-400 shadow-2xl shadow-amber-500/40 bg-gradient-to-b from-[#1c1917] via-[#10131e] to-[#0a0d16]"
+            ? "kallax-locate-beacon ring-2 ring-amber-400 bg-gradient-to-b from-[#241a10] via-[#121522] to-[#0a0d16]"
             : isCellActive
               ? "ring-2 ring-amber-400/90 shadow-xl shadow-amber-500/25 bg-gradient-to-b from-[#1a1714] via-[#0f1422] to-[#070b14]"
               : isEmpty
@@ -178,48 +184,75 @@ export function ShelfCellView({
       {/* 1. CABECERA DEL COMPARTIMENTO (Despejada en reposo / HUD en Hover)    */}
       {/* --------------------------------------------------------------------- */}
       <div className="relative w-full px-1 sm:px-2 pt-1 sm:pt-1.5 pb-0.5 z-20 pointer-events-none flex items-center justify-between min-h-[18px] sm:min-h-[22px]">
-        {/* Vista en Reposo: Identificación sobria y conteo */}
-        <div className="w-full flex items-center justify-between group-hover:hidden transition-opacity duration-200">
-          <span className="sr-only">
-            Fila {cell.row}, Columna {cell.column}
-          </span>
-
-          {/* Indicador de estado (solo si está ocupado o seleccionado) */}
-          {isCellActive ? (
-            <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[9px] font-semibold text-amber-300 bg-amber-950/80 border border-amber-500/50 px-1 sm:px-1.5 py-0.5 rounded shadow-sm truncate max-w-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-              <span className="truncate">{isOccupied ? `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}` : "Activo"}</span>
-            </span>
-          ) : isOccupied ? (
-            <div className="flex items-center gap-0.5 sm:gap-1 ml-auto">
-              <span className="text-[8px] sm:text-[9px] font-semibold text-slate-300 bg-slate-900/85 border border-slate-700/60 px-1 sm:px-1.5 py-0.5 rounded shadow-sm">
-                {totalBooks} {totalBooks === 1 ? "libro" : "libros"}
+        {/* Si este compartimento contiene el libro localizado por búsqueda, mostrar posición física en profundidad */}
+        {highlightedBook ? (
+          <div className="w-full flex items-center justify-between z-30">
+            <span
+              className={`inline-flex items-center gap-1 text-[8px] sm:text-[9.5px] font-bold px-1 sm:px-1.5 py-0.5 rounded shadow-md truncate max-w-full border ${
+                isHighlightedBehind
+                  ? "bg-amber-950 text-amber-200 border-amber-600/80"
+                  : "bg-amber-500 text-slate-950 border-amber-400 font-extrabold"
+              }`}
+              title={`Libro localizado: ${highlightedBook.title} (${isHighlightedBehind ? "Fila del fondo" : "Primera fila"}, posición ${highlightedBook.location.position})`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isHighlightedBehind ? "bg-amber-400" : "bg-slate-950"} animate-pulse shrink-0`} />
+              <span className="truncate">
+                {isHighlightedBehind
+                  ? `Fondo · Pos. ${highlightedBook.location.position}`
+                  : `Frente · Pos. ${highlightedBook.location.position}`}
               </span>
-              {hasMultipleDepths && (
-                <span
-                  className="text-[8px] sm:text-[9px] font-bold text-amber-400 bg-amber-950/90 border border-amber-600/60 px-1 py-0.5 rounded shadow-sm hidden xs:inline"
-                  title={`${behind} libros en la fila del fondo`}
-                >
-                  +{behind}
-                </span>
-              )}
-            </div>
-          ) : null}
-        </div>
+            </span>
 
-        {/* Vista en Hover: Información clara de ubicación y contenido */}
-        <div className="hidden group-hover:flex items-center justify-between w-full transition-all duration-300 ease-out">
-          <span className="text-[9px] sm:text-[10px] font-bold text-amber-300 bg-slate-950/90 border border-amber-500/50 px-1.5 sm:px-2 py-0.5 rounded shadow-md backdrop-blur-sm truncate">
-            F{cell.row}·C{cell.column}
-          </span>
-          <span className="text-[8px] sm:text-[9px] font-semibold text-slate-200 bg-slate-900/90 border border-slate-700 px-1 sm:px-1.5 py-0.5 rounded shadow-sm backdrop-blur-sm truncate">
-            {isOccupied
-              ? hasMultipleDepths
-                ? `${totalBooks} (${behind} atrás)`
-                : `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}`
-              : "Libre"}
-          </span>
-        </div>
+            <span className="text-[8px] sm:text-[9px] font-semibold text-slate-300 bg-slate-900/90 border border-slate-700/60 px-1 py-0.5 rounded shadow-sm hidden xs:inline shrink-0">
+              {totalBooks} {totalBooks === 1 ? "lib." : "libs."}
+            </span>
+          </div>
+        ) : (
+          /* Vista normal en reposo */
+          <div className="w-full flex items-center justify-between group-hover:hidden transition-opacity duration-200">
+            <span className="sr-only">
+              Fila {cell.row}, Columna {cell.column}
+            </span>
+
+            {/* Indicador de estado (solo si está ocupado o seleccionado) */}
+            {isCellActive ? (
+              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[9px] font-semibold text-amber-300 bg-amber-950/80 border border-amber-500/50 px-1 sm:px-1.5 py-0.5 rounded shadow-sm truncate max-w-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                <span className="truncate">{isOccupied ? `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}` : "Activo"}</span>
+              </span>
+            ) : isOccupied ? (
+              <div className="flex items-center gap-0.5 sm:gap-1 ml-auto">
+                <span className="text-[8px] sm:text-[9px] font-semibold text-slate-300 bg-slate-900/85 border border-slate-700/60 px-1 sm:px-1.5 py-0.5 rounded shadow-sm">
+                  {totalBooks} {totalBooks === 1 ? "libro" : "libros"}
+                </span>
+                {hasMultipleDepths && (
+                  <span
+                    className="text-[8px] sm:text-[9px] font-bold text-amber-400 bg-amber-950/90 border border-amber-600/60 px-1 py-0.5 rounded shadow-sm hidden xs:inline"
+                    title={`${behind} libros en la fila del fondo`}
+                  >
+                    +{behind}
+                  </span>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* Vista en Hover: Información clara de ubicación y contenido (cuando no es el libro localizado activo) */}
+        {!highlightedBook && (
+          <div className="hidden group-hover:flex items-center justify-between w-full transition-all duration-300 ease-out">
+            <span className="text-[9px] sm:text-[10px] font-bold text-amber-300 bg-slate-950/90 border border-amber-500/50 px-1.5 sm:px-2 py-0.5 rounded shadow-md backdrop-blur-sm truncate">
+              F{cell.row}·C{cell.column}
+            </span>
+            <span className="text-[8px] sm:text-[9px] font-semibold text-slate-200 bg-slate-900/90 border border-slate-700 px-1 sm:px-1.5 py-0.5 rounded shadow-sm backdrop-blur-sm truncate">
+              {isOccupied
+                ? hasMultipleDepths
+                  ? `${totalBooks} (${behind} atrás)`
+                  : `${totalBooks} ${totalBooks === 1 ? "libro" : "libros"}`
+                : "Libre"}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* --------------------------------------------------------------------- */}
@@ -229,14 +262,18 @@ export function ShelfCellView({
         {/* Si tiene libros en fondo, mostramos una silueta física visible de segunda fila */}
         {hasMultipleDepths && (
           <div
-            className="absolute inset-x-1 sm:inset-x-2.5 bottom-0 h-10 sm:h-20 bg-gradient-to-t from-black/80 via-slate-950/60 to-transparent rounded-t border-t border-slate-700/40 pointer-events-none z-0 flex items-end justify-around px-0.5 sm:px-1 pb-1 opacity-70"
+            className={`absolute inset-x-1 sm:inset-x-2.5 bottom-0 h-10 sm:h-20 bg-gradient-to-t from-black/80 via-slate-950/60 to-transparent rounded-t border-t pointer-events-none z-0 flex items-end justify-around px-0.5 sm:px-1 pb-1 transition-all ${
+              isHighlightedBehind
+                ? "border-amber-500/60 bg-amber-950/40 opacity-95 shadow-inner"
+                : "border-slate-700/40 opacity-70"
+            }`}
             aria-hidden="true"
           >
-            <div className="w-full flex items-end justify-around gap-0.5 sm:gap-1 opacity-40">
-              <div className="w-2.5 sm:w-4 h-8 sm:h-14 bg-amber-900 rounded-t-sm" />
-              <div className="w-3 sm:w-5 h-9 sm:h-16 bg-slate-800 rounded-t-sm" />
-              <div className="w-2.5 sm:w-4 h-7 sm:h-12 bg-stone-800 rounded-t-sm" />
-              <div className="w-3 sm:w-4 h-8 sm:h-15 bg-indigo-950 rounded-t-sm" />
+            <div className="w-full flex items-end justify-around gap-0.5 sm:gap-1">
+              <div className={`w-2.5 sm:w-4 h-8 sm:h-14 rounded-t-sm ${isHighlightedBehind ? "bg-amber-600/70 shadow-sm" : "bg-amber-900 opacity-40"}`} />
+              <div className={`w-3 sm:w-5 h-9 sm:h-16 rounded-t-sm ${isHighlightedBehind ? "bg-amber-700/70 shadow-sm" : "bg-slate-800 opacity-40"}`} />
+              <div className={`w-2.5 sm:w-4 h-7 sm:h-12 rounded-t-sm ${isHighlightedBehind ? "bg-amber-800/70 shadow-sm" : "bg-stone-800 opacity-40"}`} />
+              <div className={`w-3 sm:w-4 h-8 sm:h-15 rounded-t-sm ${isHighlightedBehind ? "bg-amber-900/70 shadow-sm" : "bg-indigo-950 opacity-40"}`} />
             </div>
           </div>
         )}

@@ -134,13 +134,18 @@ export default function HomePage() {
 
   // Selección de resultado de búsqueda ("Ver ubicación")
   const handleSelectHit = (hit: SearchHit) => {
+    // 1. Activar el libro localizado para iluminar el cubo y mostrar su profundidad
     setHighlightedBookId(hit.book.id);
-    setSelectedBookId(hit.book.id);
+    setSelectedBookId(undefined); // No tapar la estantería con la ficha modal de inmediato
+    setInspectingCell(null); // No tapar la estantería con el modal de profundidad de inmediato
+    setSearchQuery({ q: "" }); // Cerrar el desplegable de búsqueda para despejar la vista
+    setSearchResults([]);
 
-    // Conmutar a la habitación que contiene este mueble
+    // 2. Conmutar a la habitación y mueble correspondientes
     const rooms = catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room];
+    const targetShelf = catalog.shelves.find((s) => s.id === hit.location.shelfId);
     const roomWithShelf = rooms.find(
-      (r) => r.shelfIds?.includes(hit.location.shelfId) || catalog.shelves.find((s) => s.id === hit.location.shelfId)?.roomId === r.id,
+      (r) => r.shelfIds?.includes(hit.location.shelfId) || targetShelf?.roomId === r.id,
     );
     if (roomWithShelf) {
       setActiveRoomId(roomWithShelf.id);
@@ -149,26 +154,18 @@ export default function HomePage() {
     setActiveShelfId(hit.location.shelfId);
     setViewMode("shelf");
 
-    // 1. Llevar visualmente al usuario hasta el cubo correspondiente con desplazamiento suave
+    // 3. Desplazar suavemente hasta enfocar el cubo en pantalla
     setTimeout(() => {
       const cellElement = document.getElementById(`shelf-cell-${hit.location.row}-${hit.location.column}`);
       if (cellElement) {
-        cellElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        cellElement.scrollIntoView({
+          behavior: prefersReduced ? "auto" : "smooth",
+          block: "center",
+          inline: "center",
+        });
       }
-    }, 80);
-
-    // 2. Resaltar el cubo y abrir automáticamente la información de profundidad
-    const cell = catalog.cells.find(
-      (c) =>
-        c.shelfId === hit.location.shelfId &&
-        c.row === hit.location.row &&
-        c.column === hit.location.column,
-    );
-    if (cell) {
-      setTimeout(() => {
-        setInspectingCell(cell);
-      }, 550);
-    }
+    }, 120);
   };
 
   // Añadir o actualizar profundidad física de un cubo (solo admin)
@@ -441,6 +438,11 @@ export default function HomePage() {
   const selectedBook = books.find((b) => b.id === selectedBookId);
   const selectedBookLocation = selectedBook && activeShelf
     ? resolveLocation(activeShelf, selectedBook.location)
+    : null;
+
+  const highlightedBook = books.find((b) => b.id === highlightedBookId);
+  const highlightedBookLocation = highlightedBook && activeShelf
+    ? resolveLocation(activeShelf, highlightedBook.location)
     : null;
 
   // Métricas inmediatas de la estantería y estancia activa
@@ -836,6 +838,68 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
+      {/* Banner / HUD flotante de localización física */}
+      {highlightedBook && highlightedBookLocation && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 max-w-lg w-[calc(100%-2rem)] bg-slate-900/95 border border-amber-500/40 rounded-2xl p-3 sm:p-3.5 shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 text-slate-100 animate-in fade-in slide-in-from-bottom-3 duration-300"
+        >
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 text-amber-400 shadow-inner">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-amber-300 truncate">
+                Localizando: <span className="text-slate-100">{highlightedBook.title}</span>
+              </p>
+              <p className="text-[11px] sm:text-xs text-slate-300 truncate">
+                {activeRoom.name} · {highlightedBookLocation.phrase}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const targetCell = catalog.cells.find(
+                  (c) =>
+                    c.shelfId === highlightedBook.location.shelfId &&
+                    c.row === highlightedBook.location.row &&
+                    c.column === highlightedBook.location.column,
+                );
+                if (targetCell) setInspectingCell(targetCell);
+              }}
+              className="px-2 sm:px-2.5 py-1 text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg border border-amber-500/30 transition-colors"
+              title="Abrir vista en profundidad del compartimento"
+            >
+              Profundidad
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedBookId(highlightedBook.id)}
+              className="px-2 sm:px-2.5 py-1 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition-colors"
+            >
+              Ficha
+            </button>
+            <button
+              type="button"
+              onClick={() => setHighlightedBookId(undefined)}
+              className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+              title="Cerrar localizador"
+              aria-label="Cerrar localizador"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Modal de inspección de profundidad en planta */}
       <CellDepthModal
