@@ -200,11 +200,15 @@ export default function HomePage() {
       setBooks(updatedBooks);
       saveBooksToStorage(updatedBooks);
 
+      const updatedCells = updatedCell
+        ? catalog.cells.map((c) => (c.id === updatedCell.id ? updatedCell : c))
+        : catalog.cells;
+      setCatalog((prev) => ({
+        ...prev,
+        books: updatedBooks,
+        cells: updatedCells,
+      }));
       if (updatedCell) {
-        const updatedCells = catalog.cells.map((c) =>
-          c.id === updatedCell.id ? updatedCell : c,
-        );
-        setCatalog((prev) => ({ ...prev, cells: updatedCells }));
         saveCellsToStorage(updatedCells);
       }
 
@@ -219,11 +223,15 @@ export default function HomePage() {
       const updatedBooks = updateBook(updatedBook);
       setBooks(updatedBooks);
 
+      const updatedCells = updatedCell
+        ? catalog.cells.map((c) => (c.id === updatedCell.id ? updatedCell : c))
+        : catalog.cells;
+      setCatalog((prev) => ({
+        ...prev,
+        books: updatedBooks,
+        cells: updatedCells,
+      }));
       if (updatedCell) {
-        const updatedCells = catalog.cells.map((c) =>
-          c.id === updatedCell.id ? updatedCell : c,
-        );
-        setCatalog((prev) => ({ ...prev, cells: updatedCells }));
         saveCellsToStorage(updatedCells);
       }
 
@@ -237,6 +245,7 @@ export default function HomePage() {
     startTransition(() => {
       const updatedBooks = deleteBook(bookId);
       setBooks(updatedBooks);
+      setCatalog((prev) => ({ ...prev, books: updatedBooks }));
       if (selectedBookId === bookId) setSelectedBookId(undefined);
       if (highlightedBookId === bookId) setHighlightedBookId(undefined);
     });
@@ -445,9 +454,16 @@ export default function HomePage() {
     ? resolveLocation(activeShelf, highlightedBook.location)
     : null;
 
-  // Métricas inmediatas de la estantería y estancia activa
+  // Métricas inmediatas de la estantería y estancia activa (solo compartimentos habilitados)
+  const activeShelfEnabledKeys = new Set(
+    activeShelfCells.filter((c) => c.enabled).map((c) => `${c.row}-${c.column}`),
+  );
   const activeShelfBooks = activeShelf
-    ? books.filter((b) => b.location.shelfId === activeShelf.id)
+    ? books.filter(
+        (b) =>
+          b.location.shelfId === activeShelf.id &&
+          activeShelfEnabledKeys.has(`${b.location.row}-${b.location.column}`),
+      )
     : [];
   const activeShelfOccupiedCells = activeShelf
     ? new Set(activeShelfBooks.map((b) => `${b.location.row}-${b.location.column}`)).size
@@ -456,9 +472,17 @@ export default function HomePage() {
   const occupancyPercentage = activeShelfTotalCells > 0
     ? Math.round((activeShelfOccupiedCells / activeShelfTotalCells) * 100)
     : 0;
-  const roomBooksCount = books.filter((b) =>
-    displayedShelves.some((s) => s.id === b.location.shelfId),
-  ).length;
+  const roomBooksCount = books.filter((b) => {
+    const isShelfInRoom = displayedShelves.some((s) => s.id === b.location.shelfId);
+    if (!isShelfInRoom) return false;
+    const targetCell = catalog.cells.find(
+      (c) =>
+        c.shelfId === b.location.shelfId &&
+        c.row === b.location.row &&
+        c.column === b.location.column,
+    );
+    return targetCell ? targetCell.enabled : true;
+  }).length;
 
   return (
     <div className="min-h-screen flex flex-col room-wall-ambient text-slate-100 overflow-x-hidden">

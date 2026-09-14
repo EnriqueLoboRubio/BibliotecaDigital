@@ -90,7 +90,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ej: admin"
+              placeholder="Usuario"
               className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -106,10 +106,6 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               placeholder="••••••••"
               className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
-          </div>
-
-          <div className="p-2.5 rounded-lg bg-blue-950/30 border border-blue-900/40 text-[11px] text-blue-300">
-            💡 <strong>Acceso inicial</strong>: Usuario <code>admin</code> / Contraseña <code>admin123</code>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">

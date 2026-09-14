@@ -54,9 +54,24 @@ export function ShelfUnit({
   };
 
   const label = `${shelf.name}, ${shelf.columns} por ${shelf.rows}`;
-  const totalBooksInShelf = books.filter(
-    (b) => b.location.shelfId === shelf.id,
-  ).length;
+
+  // Métricas precisas: solo contar libros en compartimentos activos
+  const enabledCellKeys = new Set(
+    cells
+      .filter((c) => c.shelfId === shelf.id && c.enabled)
+      .map((c) => `${c.row}-${c.column}`),
+  );
+  const shelfBooks = books.filter(
+    (b) =>
+      b.location.shelfId === shelf.id &&
+      enabledCellKeys.has(`${b.location.row}-${b.location.column}`),
+  );
+  const totalBooksInShelf = shelfBooks.length;
+  const occupiedCubes = new Set(
+    shelfBooks.map((b) => `${b.location.row}-${b.location.column}`),
+  ).size;
+  const totalCubes = shelf.columns * shelf.rows;
+  const occupancyPercent = totalCubes > 0 ? Math.round((occupiedCubes / totalCubes) * 100) : 0;
 
   const handleSaveName = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -84,14 +99,6 @@ export function ShelfUnit({
       }
     }
   };
-
-  const totalCubes = shelf.columns * shelf.rows;
-  const occupiedCubes = new Set(
-    books
-      .filter((b) => b.location.shelfId === shelf.id)
-      .map((b) => `${b.location.row}-${b.location.column}`),
-  ).size;
-  const occupancyPercent = totalCubes > 0 ? Math.round((occupiedCubes / totalCubes) * 100) : 0;
 
   return (
     <div className="w-full mx-auto flex flex-col items-center">

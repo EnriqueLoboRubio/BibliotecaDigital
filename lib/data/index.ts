@@ -44,6 +44,19 @@ const STORAGE_CELLS_KEY = "biblioteca_digital_cells_v1";
 const STORAGE_SHELVES_KEY = "biblioteca_digital_shelves_v1";
 const STORAGE_ROOMS_KEY = "biblioteca_digital_rooms_v1";
 
+/**
+ * Garantiza la invariante de ARQUITECTURE.md:
+ * Ningún libro puede pertenecer a un cubo desactivado o inexistente.
+ */
+export function sanitizeBooksAgainstCells(books: Book[], cells: ShelfCell[]): Book[] {
+  const enabledCellKeys = new Set(
+    cells.filter((c) => c.enabled).map((c) => `${c.shelfId}:${c.row}:${c.column}`),
+  );
+  return books.filter((b) =>
+    enabledCellKeys.has(`${b.location.shelfId}:${b.location.row}:${b.location.column}`),
+  );
+}
+
 export function getStoredBooks(): Book[] {
   if (typeof window === "undefined") {
     return [];
@@ -51,7 +64,20 @@ export function getStoredBooks(): Book[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as Book[];
+    const books = JSON.parse(raw) as Book[];
+    if (!Array.isArray(books)) return [];
+
+    // Garantizar que no haya libros huérfanos en cubos bloqueados
+    const cells = getStoredCells();
+    const validBooks = sanitizeBooksAgainstCells(books, cells);
+    if (validBooks.length !== books.length) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(validBooks));
+      } catch {
+        // Ignorar errores de cuota local
+      }
+    }
+    return validBooks;
   } catch {
     return [];
   }
@@ -702,13 +728,27 @@ export async function getCatalog(): Promise<LibraryCatalog> {
           }
         }
 
+        // Invariante ARQUITECTURE.md: solo libros en cubos activos
+        const validBooks = sanitizeBooksAgainstCells(books, cells);
+        if (validBooks.length !== books.length && isSupabaseConfigured && supabase) {
+          const enabledCellKeys = new Set(
+            cells.filter((c) => c.enabled).map((c) => `${c.shelfId}:${c.row}:${c.column}`),
+          );
+          const orphanedIds = books
+            .filter((b) => !enabledCellKeys.has(`${b.location.shelfId}:${b.location.row}:${b.location.column}`))
+            .map((b) => b.id);
+          if (orphanedIds.length > 0) {
+            void supabase.from("books").delete().in("id", orphanedIds);
+          }
+        }
+
         // Cache local
         if (typeof window !== "undefined") {
           try {
             localStorage.setItem(STORAGE_ROOMS_KEY, JSON.stringify(rooms));
             localStorage.setItem(STORAGE_SHELVES_KEY, JSON.stringify(shelves));
             localStorage.setItem(STORAGE_CELLS_KEY, JSON.stringify(cells));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(validBooks));
           } catch {
             // Ignorar errores de cuota local
           }
@@ -719,7 +759,7 @@ export async function getCatalog(): Promise<LibraryCatalog> {
           rooms: rooms.length > 0 ? rooms : [initialRoom],
           shelves,
           cells,
-          books,
+          books: validBooks,
         };
       }
     } catch (err) {
@@ -728,7 +768,6 @@ export async function getCatalog(): Promise<LibraryCatalog> {
   }
 
   // Respaldo local
-  const books = getStoredBooks();
   const rawCells = getStoredCells().sort((a, b) =>
     a.row !== b.row ? a.row - b.row : a.column - b.column,
   );
@@ -758,6 +797,17 @@ export async function getCatalog(): Promise<LibraryCatalog> {
     }
     cells = [...rawCells, ...generatedCells];
     saveCellsToStorage(cells);
+  }
+
+  // Obtener libros saneados según celdas activas
+  const rawBooks = getStoredBooks();
+  const books = sanitizeBooksAgainstCells(rawBooks, cells);
+  if (books.length !== rawBooks.length && typeof window !== "undefined") {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+    } catch {
+      // Ignorar errores
+    }
   }
 
   return {
