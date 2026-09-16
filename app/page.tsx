@@ -103,6 +103,18 @@ export default function HomePage() {
               );
               if (cell) setInspectingCell(cell);
             }
+            setTimeout(() => {
+              const cellElement = document.getElementById(
+                `shelf-cell-${found.location.row}-${found.location.column}`,
+              );
+              if (cellElement) {
+                cellElement.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                  inline: "center",
+                });
+              }
+            }, 250);
           }
         }
       }
@@ -124,7 +136,6 @@ export default function HomePage() {
     setSearchQuery(query);
     if (!query.q.trim()) {
       setSearchResults([]);
-      setHighlightedBookId(undefined);
       return;
     }
     const hits = searchBooks(books, query);
@@ -148,40 +159,55 @@ export default function HomePage() {
     };
   };
 
-  // Selección de resultado de búsqueda ("Ver ubicación")
-  const handleSelectHit = (hit: SearchHit) => {
-    // 1. Activar el libro localizado para iluminar el cubo y mostrar su profundidad
-    setHighlightedBookId(hit.book.id);
-    setSelectedBookId(undefined); // No tapar la estantería con la ficha modal de inmediato
-    setInspectingCell(null); // No tapar la estantería con el modal de profundidad de inmediato
-    setSearchQuery({ q: "" }); // Cerrar el desplegable de búsqueda para despejar la vista
+  // Navegar a la estantería física y enfocar el libro en pantalla
+  const handleShowBookInShelf = (bookId: string) => {
+    const targetBook = books.find((b) => b.id === bookId);
+    if (!targetBook) return;
+
+    // 1. Cerrar modales que tapan la vista para despejar la estantería
+    setSelectedBookId(undefined);
+    setInspectingCell(null);
+    setSearchQuery({ q: "" });
     setSearchResults([]);
 
-    // 2. Conmutar a la habitación y mueble correspondientes
+    // 2. Activar iluminación física del libro localizado (baliza visual animada)
+    setHighlightedBookId(targetBook.id);
+
+    // 3. Conmutar a la habitación del mueble si es necesario
     const rooms = catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room];
-    const targetShelf = catalog.shelves.find((s) => s.id === hit.location.shelfId);
+    const targetShelf = catalog.shelves.find((s) => s.id === targetBook.location.shelfId);
     const roomWithShelf = rooms.find(
-      (r) => r.shelfIds?.includes(hit.location.shelfId) || targetShelf?.roomId === r.id,
+      (r) => r.shelfIds?.includes(targetBook.location.shelfId) || targetShelf?.roomId === r.id,
     );
     if (roomWithShelf) {
       setActiveRoomId(roomWithShelf.id);
     }
 
-    setActiveShelfId(hit.location.shelfId);
+    // 4. Conmutar a la estantería destino y cambiar a modo estantería
+    setActiveShelfId(targetBook.location.shelfId);
     setViewMode("shelf");
 
-    // 3. Desplazar suavemente hasta enfocar el cubo en pantalla
+    // 5. Desplazar suavemente hasta enfocar el compartimento en el centro de la pantalla
     setTimeout(() => {
-      const cellElement = document.getElementById(`shelf-cell-${hit.location.row}-${hit.location.column}`);
+      const cellElement = document.getElementById(
+        `shelf-cell-${targetBook.location.row}-${targetBook.location.column}`,
+      );
       if (cellElement) {
-        const prefersReduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const prefersReduced =
+          typeof window !== "undefined" &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         cellElement.scrollIntoView({
           behavior: prefersReduced ? "auto" : "smooth",
           block: "center",
           inline: "center",
         });
       }
-    }, 120);
+    }, 150);
+  };
+
+  // Selección de resultado de búsqueda ("Ver ubicación")
+  const handleSelectHit = (hit: SearchHit) => {
+    handleShowBookInShelf(hit.book.id);
   };
 
   // Añadir o actualizar profundidad física de un cubo (solo admin)
@@ -1218,9 +1244,7 @@ export default function HomePage() {
           book={selectedBook}
           location={selectedBookLocation}
           onClose={() => setSelectedBookId(undefined)}
-          onShowInShelf={() => {
-            setHighlightedBookId(selectedBook.id);
-          }}
+          onShowInShelf={() => handleShowBookInShelf(selectedBook.id)}
           onRelocateBook={
             canEdit
               ? (b) => {

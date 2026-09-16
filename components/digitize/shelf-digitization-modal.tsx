@@ -61,6 +61,25 @@ export function ShelfDigitizationModal({
     [enabledCells],
   );
 
+  // Sincronizar stream activo con el visor de video cuando se monta
+  useEffect(() => {
+    if (isCameraActive && videoRef.current && streamRef.current) {
+      const video = videoRef.current;
+      if (video.srcObject !== streamRef.current) {
+        video.srcObject = streamRef.current;
+      }
+      video.setAttribute("playsinline", "true");
+      video.setAttribute("webkit-playsinline", "true");
+      video.muted = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("[Camera] Autoplay play error:", err);
+        });
+      }
+    }
+  }, [isCameraActive, cameraFacing]);
+
   // Detener la cámara web de forma limpia
   const stopCamera = () => {
     if (streamRef.current) {
@@ -77,41 +96,66 @@ export function ShelfDigitizationModal({
   const startCamera = async (facing: "environment" | "user" = cameraFacing) => {
     stopCamera();
     setErrorMessage(null);
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        cameraFileInputRef.current?.click();
-        return;
-      }
 
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-        audio: false,
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setIsCameraActive(true);
-    } catch (err) {
-      console.warn("[Camera] Error accediendo a getUserMedia:", err);
-      // Fallback a selector de cámara nativo
+    // Verificar si getUserMedia está disponible en este entorno / navegador
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      console.warn("[Camera] getUserMedia no disponible o contexto no seguro (HTTP en móvil)");
       cameraFileInputRef.current?.click();
+      setErrorMessage(
+        "El visor de cámara en directo requiere una conexión segura (HTTPS o localhost). Se ha abierto la cámara nativa del móvil para tomar la foto.",
+      );
+      return;
+    }
+
+    try {
+      let stream: MediaStream;
+      try {
+        const constraints: MediaStreamConstraints = {
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (constraintErr) {
+        console.warn("[Camera] Constraints avanzados no soportados, usando fallback permisivo:", constraintErr);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
+
+      streamRef.current = stream;
+      setIsCameraActive(true);
+
+      if (videoRef.current) {
+        const video = videoRef.current;
+        video.srcObject = stream;
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("webkit-playsinline", "true");
+        video.muted = true;
+        video.play().catch((err) => console.warn("[Camera] Error al reproducir video:", err));
+      }
+    } catch (err: unknown) {
+      console.warn("[Camera] Error accediendo a getUserMedia:", err);
+      cameraFileInputRef.current?.click();
+      const isDenied = err instanceof DOMException && err.name === "NotAllowedError";
+      setErrorMessage(
+        isDenied
+          ? "Permiso de cámara no concedido. Puedes tomar la fotografía directamente con la cámara del móvil."
+          : "No se pudo iniciar el visor de la cámara. Puedes hacer una foto con la cámara de tu móvil.",
+      );
     }
   };
 
   // Alternar entre cámara trasera y delantera
-  const toggleCameraFacing = () => {
+  const toggleCameraFacing = async () => {
     const nextFacing = cameraFacing === "environment" ? "user" : "environment";
     setCameraFacing(nextFacing);
     if (isCameraActive) {
-      void startCamera(nextFacing);
+      await startCamera(nextFacing);
     }
   };
 
@@ -119,9 +163,15 @@ export function ShelfDigitizationModal({
   const capturePhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
+    const w = video.videoWidth || 1280;
+    const h = video.videoHeight || 720;
+    if (w === 0 || h === 0) {
+      setErrorMessage("La cámara está inicializando el visor. Por favor, pulsa capturar en un instante.");
+      return;
+    }
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -520,15 +570,29 @@ export function ShelfDigitizationModal({
 
         {/* Mensajes de Estado o Advertencia */}
         {errorMessage && (
-          <div className="mx-5 mt-3 p-3 rounded-xl bg-red-950/80 border border-red-800 text-xs text-red-200 flex items-center justify-between gap-2">
-            <span>⚠️ {errorMessage}</span>
-            <button
-              type="button"
-              onClick={() => setErrorMessage(null)}
-              className="text-red-400 hover:text-white"
-            >
-              ✕
-            </button>
+          <div className="mx-5 mt-3 p-3 rounded-xl bg-red-950/80 border border-red-800 text-xs text-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-lg animate-in fade-in duration-150">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="shrink-0">⚠️</span>
+              <span className="break-words">{errorMessage}</span>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => cameraFileInputRef.current?.click()}
+                className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer transition-colors shadow"
+              >
+                <span>📸</span>
+                <span>Usar cámara nativa</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="text-red-400 hover:text-white p-1"
+                aria-label="Cerrar advertencia"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
 
@@ -556,6 +620,10 @@ export function ShelfDigitizationModal({
                   autoPlay
                   playsInline
                   muted
+                  onLoadedMetadata={(e) => {
+                    const video = e.currentTarget;
+                    video.play().catch((err) => console.warn("[Camera] onLoadedMetadata play error:", err));
+                  }}
                   className="w-full h-full object-cover max-h-[480px] rounded-xl"
                 />
 
@@ -627,20 +695,34 @@ export function ShelfDigitizationModal({
                     Usa la cámara directamente o selecciona un archivo. La IA detectará los lomos, descartará plantas u objetos decorativos y te permitirá confirmar antes de guardar.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+                <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mt-2">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      startCamera();
+                      cameraFileInputRef.current?.click();
                     }}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold shadow-lg shadow-amber-950/40 border border-amber-400/40 flex items-center gap-2 cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold shadow-lg shadow-amber-950/40 border border-amber-400/40 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
                   >
                     <svg className="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span>Abrir Cámara</span>
+                    <span>Hacer foto (Cámara móvil)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void startCamera();
+                    }}
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+                  >
+                    <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>Visor en directo</span>
                   </button>
 
                   <button
@@ -649,7 +731,7 @@ export function ShelfDigitizationModal({
                       e.stopPropagation();
                       fileInputRef.current?.click();
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 text-xs font-medium border border-slate-750 flex items-center gap-1.5 cursor-pointer"
                   >
                     <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -663,7 +745,7 @@ export function ShelfDigitizationModal({
                       e.stopPropagation();
                       handleLoadSampleImage();
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 text-xs font-medium border border-slate-750 cursor-pointer"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium border border-slate-750 cursor-pointer"
                   >
                     Foto de muestra
                   </button>
