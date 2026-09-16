@@ -8,6 +8,7 @@ export function BookDetail({
   onClose,
   onShowInShelf,
   onEditBook,
+  onRelocateBook,
 }: BookDetailProps) {
   const { canEdit } = useAuth();
   const isBehind = location.depth > 1;
@@ -109,7 +110,21 @@ export function BookDetail({
 
         {/* Acciones */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-slate-800">
-          <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {canEdit && onRelocateBook && (
+              <button
+                type="button"
+                onClick={() => onRelocateBook(book)}
+                className="w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-300 bg-sky-950/60 hover:bg-sky-900/60 border border-sky-700/60 transition-colors flex items-center justify-center gap-1.5 min-h-[38px] cursor-pointer"
+                title="Reubicar rápidamente en otro compartimento"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <span>⇄ Reubicar</span>
+              </button>
+            )}
+
             {canEdit && onEditBook && (
               <button
                 type="button"
@@ -119,7 +134,7 @@ export function BookDetail({
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                <span>Editar / Trasladar</span>
+                <span>Editar ficha</span>
               </button>
             )}
           </div>

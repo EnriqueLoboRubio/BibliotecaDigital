@@ -14,6 +14,8 @@ interface CellDepthModalProps {
   onSelectBook: (bookId: string) => void;
   onAddBookToCell?: (row: number, column: number, depth: number) => void;
   onDigitizeCell?: (row: number, column: number, depth: number) => void;
+  onStartContinuousScan?: (row: number, column: number, depth: number) => void;
+  onRelocateBook?: (book: Book) => void;
   onUpdateDepthCount?: (cellId: string, newDepthCount: number) => void;
   onToggleCellEnabled?: (cell: ShelfCell, enabled: boolean) => void;
 }
@@ -28,6 +30,8 @@ export function CellDepthModal({
   onSelectBook,
   onAddBookToCell,
   onDigitizeCell,
+  onStartContinuousScan,
+  onRelocateBook,
   onUpdateDepthCount,
   onToggleCellEnabled,
 }: CellDepthModalProps) {
@@ -312,9 +316,20 @@ export function CellDepthModal({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                     {canEdit ? (
                       <>
+                        {onStartContinuousScan && (
+                          <button
+                            type="button"
+                            onClick={() => onStartContinuousScan(cell.row, cell.column, d)}
+                            className="text-xs font-semibold text-sky-300 hover:text-sky-200 bg-sky-950/60 hover:bg-sky-900/70 px-2.5 py-1.5 rounded-xl border border-sky-700/60 transition-colors flex items-center justify-center gap-1 shadow-sm min-h-[36px] cursor-pointer"
+                            title="Escanear múltiples códigos de barras de forma continua para este compartimento"
+                          >
+                            <span>⚡ Modo Ráfaga</span>
+                          </button>
+                        )}
+
                         {onDigitizeCell && (
                           <button
                             type="button"
@@ -387,24 +402,45 @@ export function CellDepthModal({
                     </span>
                     <div className="flex flex-col gap-1.5">
                       {depthBooks.map((b) => (
-                        <button
+                        <div
                           key={b.id}
-                          type="button"
-                          onClick={() => onSelectBook(b.id)}
-                          className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 text-left transition-colors cursor-pointer min-h-[44px]"
+                          className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 text-left transition-colors min-h-[44px]"
                         >
-                          <div className="min-w-0 flex-1 pr-2">
+                          <button
+                            type="button"
+                            onClick={() => onSelectBook(b.id)}
+                            className="min-w-0 flex-1 pr-2 text-left cursor-pointer"
+                          >
                             <span className="text-xs font-bold text-white block truncate">
                               {b.title}
                             </span>
                             <span className="text-[11px] text-slate-400 block truncate">
                               {b.author}
                             </span>
+                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {canEdit && onRelocateBook && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onRelocateBook(b);
+                                }}
+                                className="text-[10px] font-semibold text-sky-300 bg-sky-950/70 hover:bg-sky-900 border border-sky-600/50 px-2 py-1 rounded-lg shrink-0 cursor-pointer"
+                                title="Reubicar rápidamente en otro compartimento"
+                              >
+                                ⇄ Mover
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => onSelectBook(b.id)}
+                              className="text-[10px] font-semibold text-amber-300 bg-amber-950/70 border border-amber-600/50 px-2 py-1 rounded-lg shrink-0 cursor-pointer"
+                            >
+                              Ficha →
+                            </button>
                           </div>
-                          <span className="text-[10px] font-semibold text-amber-300 bg-amber-950/70 border border-amber-600/50 px-2 py-1 rounded-lg shrink-0">
-                            Ficha →
-                          </span>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   </div>

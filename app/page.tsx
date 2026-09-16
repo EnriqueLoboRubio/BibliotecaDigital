@@ -25,10 +25,12 @@ import { searchBooks } from "@/lib/search";
 import { ShelfUnit, RoomPlan, CellDepthModal, AddShelfModal } from "@/components/Library";
 import { AppHeader } from "@/components/chrome";
 import { SearchBox } from "@/components/Search";
-import { BookDetail, AddBookModal, EditBookModal } from "@/components/book";
+import { BookDetail, AddBookModal, EditBookModal, QuickRelocateModal } from "@/components/book";
 import { CreateRoomModal, FloorPlant, RoomSelector, WallArt } from "@/components/room";
 import { ShelfDigitizationModal } from "@/components/digitize";
 import { LoginModal } from "@/components/auth";
+import { BackupModal } from "@/components/backup";
+import { BarcodeScannerModal, type ScannedBookBatchItem } from "@/components/scanner";
 import { useAuth } from "@/lib/auth/context";
 
 export default function HomePage() {
@@ -58,6 +60,16 @@ export default function HomePage() {
   const [isDigitizeModalOpen, setIsDigitizeModalOpen] = useState(false);
   const [digitizeInitialCell, setDigitizeInitialCell] = useState<{ row: number; column: number; depth: number } | undefined>();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isBackupOpen, setIsBackupOpen] = useState(false);
+  const [relocatingBook, setRelocatingBook] = useState<Book | null>(null);
+  const [burstScanTarget, setBurstScanTarget] = useState<{
+    shelfId: string;
+    shelfName: string;
+    row: number;
+    column: number;
+    depth: number;
+  } | null>(null);
+  const [isBurstScannerOpen, setIsBurstScannerOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   // Carga inicial del catálogo y detección de ?book= en URL
@@ -276,6 +288,118 @@ export default function HomePage() {
       if (newBooks.length > 0) {
         setHighlightedBookId(newBooks[0].id);
       }
+    });
+  };
+
+  // Iniciar Modo Ráfaga (escaneo continuo con código de barras) para un compartimento y profundidad específicos
+  const handleStartBurstScan = (row: number, column: number, depth: number) => {
+    if (!canEdit) {
+      setIsLoginOpen(true);
+      return;
+    }
+    if (activeShelf) {
+      setBurstScanTarget({
+        shelfId: activeShelf.id,
+        shelfName: activeShelf.name,
+        row,
+        column,
+        depth,
+      });
+      setIsBurstScannerOpen(true);
+      setInspectingCell(null);
+    }
+  };
+
+  // Guardar en lote los libros leídos en Modo Ráfaga
+  const handleBatchAddBooks = (scannedItems: ScannedBookBatchItem[]) => {
+    if (!canEdit) {
+      setIsLoginOpen(true);
+      return;
+    }
+    if (!burstScanTarget || scannedItems.length === 0) return;
+
+    startTransition(() => {
+      const targetBooks = books.filter(
+        (b) =>
+          b.location.shelfId === burstScanTarget.shelfId &&
+          b.location.row === burstScanTarget.row &&
+          b.location.column === burstScanTarget.column &&
+          b.location.depth === burstScanTarget.depth,
+      );
+      let nextPos = targetBooks.length + 1;
+
+      const newBooks: Book[] = scannedItems.map((item, idx) => ({
+        id: `book-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+        title: item.title || `Libro ${item.isbn}`,
+        author: item.author || "Autor desconocido",
+        isbn: item.isbn,
+        year: item.year || new Date().getFullYear(),
+        genre: item.genre || "General",
+        cover: item.cover,
+        location: {
+          shelfId: burstScanTarget.shelfId,
+          row: burstScanTarget.row,
+          column: burstScanTarget.column,
+          depth: burstScanTarget.depth,
+          position: nextPos++,
+        },
+      }));
+
+      const updatedBooks = [...books, ...newBooks];
+      setBooks(updatedBooks);
+      saveBooksToStorage(updatedBooks);
+      setCatalog((prev) => ({
+        ...prev,
+        books: updatedBooks,
+      }));
+      setIsBurstScannerOpen(false);
+      setBurstScanTarget(null);
+      if (newBooks.length > 0) {
+        setHighlightedBookId(newBooks[newBooks.length - 1].id);
+        setSelectedBookId(newBooks[newBooks.length - 1].id);
+      }
+    });
+  };
+
+  // Reubicación rápida visual de un libro con selector mini-grid
+  const handleQuickRelocateBook = (
+    book: Book,
+    targetLocation: { shelfId: string; row: number; column: number; depth: number },
+  ) => {
+    if (!canEdit) {
+      setIsLoginOpen(true);
+      return;
+    }
+    startTransition(() => {
+      const booksInDestination = books.filter(
+        (b) =>
+          b.id !== book.id &&
+          b.location.shelfId === targetLocation.shelfId &&
+          b.location.row === targetLocation.row &&
+          b.location.column === targetLocation.column &&
+          b.location.depth === targetLocation.depth,
+      );
+      const nextPosition = booksInDestination.length + 1;
+
+      const updatedBook: Book = {
+        ...book,
+        location: {
+          shelfId: targetLocation.shelfId,
+          row: targetLocation.row,
+          column: targetLocation.column,
+          depth: targetLocation.depth,
+          position: nextPosition,
+        },
+      };
+
+      const updatedBooks = updateBook(updatedBook);
+      setBooks(updatedBooks);
+      setCatalog((prev) => ({ ...prev, books: updatedBooks }));
+      setRelocatingBook(null);
+      setSelectedBookId(updatedBook.id);
+      setHighlightedBookId(updatedBook.id);
+      setActiveShelfId(targetLocation.shelfId);
+      setViewMode("shelf");
     });
   };
 
@@ -513,6 +637,7 @@ export default function HomePage() {
         title="Biblioteca Digital"
         currentLocation={activeShelf ? `${activeRoom.name} · ${activeShelf.name}` : activeRoom.name}
         bookCount={books.length}
+        onOpenBackup={() => setIsBackupOpen(true)}
         onAddBook={
           canEdit
             ? () => {
@@ -631,17 +756,30 @@ export default function HomePage() {
                       </button>
 
                       {activeShelf && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDigitizeInitialCell(undefined);
-                            setIsDigitizeModalOpen(true);
-                          }}
-                          className="px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-amber-500/40 hover:border-amber-400 shadow-md shadow-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
-                          title="Digitalizar estantería o compartimento mediante fotografía e IA"
-                        >
-                          <span>📸 Digitalizar con IA</span>
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleStartBurstScan(1, 1, 1);
+                            }}
+                            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-sky-500/40 hover:border-sky-400 shadow-md shadow-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                            title="Escanear múltiples libros seguidos con la cámara y colocarlos en lote"
+                          >
+                            <span>⚡ Modo Ráfaga</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDigitizeInitialCell(undefined);
+                              setIsDigitizeModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-amber-500/40 hover:border-amber-400 shadow-md shadow-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                            title="Digitalizar estantería o compartimento mediante fotografía e IA"
+                          >
+                            <span>📸 Digitalizar con IA</span>
+                          </button>
+                        </>
                       )}
                     </>
                   ) : (
@@ -1061,6 +1199,15 @@ export default function HomePage() {
           setIsDigitizeModalOpen(true);
           setInspectingCell(null);
         }}
+        onStartContinuousScan={canEdit ? handleStartBurstScan : undefined}
+        onRelocateBook={
+          canEdit
+            ? (b) => {
+                setInspectingCell(null);
+                setRelocatingBook(b);
+              }
+            : undefined
+        }
         onUpdateDepthCount={isAdmin ? handleUpdateCellDepthCount : undefined}
         onToggleCellEnabled={isAdmin ? handleToggleCellEnabled : undefined}
       />
@@ -1074,6 +1221,14 @@ export default function HomePage() {
           onShowInShelf={() => {
             setHighlightedBookId(selectedBook.id);
           }}
+          onRelocateBook={
+            canEdit
+              ? (b) => {
+                  setSelectedBookId(undefined);
+                  setRelocatingBook(b);
+                }
+              : undefined
+          }
           onEditBook={(b) => setEditingBook(b)}
         />
       )}
@@ -1130,6 +1285,56 @@ export default function HomePage() {
           onConfirmBooks={handleConfirmDigitizedBooks}
         />
       )}
+
+      {/* Modal de Reubicación Rápida con mini-grid visual */}
+      <QuickRelocateModal
+        isOpen={Boolean(relocatingBook && canEdit)}
+        book={relocatingBook}
+        shelves={catalog.shelves}
+        cells={catalog.cells}
+        existingBooks={books}
+        onClose={() => setRelocatingBook(null)}
+        onConfirmRelocate={handleQuickRelocateBook}
+      />
+
+      {/* Modal de Escaneo Continuo por Código de Barras (Modo Ráfaga) */}
+      <BarcodeScannerModal
+        isOpen={isBurstScannerOpen && Boolean(burstScanTarget) && canEdit}
+        mode="continuous"
+        onClose={() => {
+          setIsBurstScannerOpen(false);
+          setBurstScanTarget(null);
+        }}
+        onBatchConfirm={handleBatchAddBooks}
+        batchTargetInfo={
+          burstScanTarget
+            ? {
+                shelfName: burstScanTarget.shelfName,
+                row: burstScanTarget.row,
+                column: burstScanTarget.column,
+                depth: burstScanTarget.depth,
+              }
+            : undefined
+        }
+      />
+
+      {/* Modal de Copias de Seguridad (Exportar JSON / CSV y Restaurar) */}
+      <BackupModal
+        isOpen={isBackupOpen}
+        onClose={() => setIsBackupOpen(false)}
+        catalog={catalog}
+        rooms={catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room]}
+        onBackupRestored={(restored) => {
+          setCatalog(restored);
+          setBooks(restored.books);
+          if (restored.rooms && restored.rooms.length > 0) {
+            setActiveRoomId(restored.rooms[0].id);
+          }
+          if (restored.shelves.length > 0) {
+            setActiveShelfId(restored.shelves[0].id);
+          }
+        }}
+      />
 
       {/* Modal de inicio de sesión cuando se requiera autenticación */}
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />

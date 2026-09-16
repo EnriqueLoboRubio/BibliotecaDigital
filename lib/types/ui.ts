@@ -59,6 +59,7 @@ export interface BookDetailProps {
   onClose: () => void;
   onShowInShelf: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
+  onRelocateBook?: (book: Book) => void;
 }
 
 
@@ -89,5 +90,6 @@ export interface AppHeaderProps {
   currentLocation?: string;
   bookCount?: number;
   onAddBook?: () => void;
+  onOpenBackup?: () => void;
 }
 
