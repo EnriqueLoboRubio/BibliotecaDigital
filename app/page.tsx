@@ -317,6 +317,24 @@ export default function HomePage() {
     });
   };
 
+  // Reordenar libros dentro de una misma fila de profundidad en un compartimento
+  const handleReorderBooksInDepth = (reorderedBooksInDepth: Book[]) => {
+    if (!canEdit) {
+      setIsLoginOpen(true);
+      return;
+    }
+    startTransition(() => {
+      const reorderedMap = new Map(reorderedBooksInDepth.map((b) => [b.id, b]));
+      const updatedBooks = books.map((b) => reorderedMap.get(b.id) || b);
+      setBooks(updatedBooks);
+      saveBooksToStorage(updatedBooks);
+      setCatalog((prev) => ({
+        ...prev,
+        books: updatedBooks,
+      }));
+    });
+  };
+
   // Iniciar Modo Ráfaga (escaneo continuo con código de barras) para un compartimento y profundidad específicos
   const handleStartBurstScan = (row: number, column: number, depth: number) => {
     if (!canEdit) {
@@ -1236,6 +1254,7 @@ export default function HomePage() {
         }
         onUpdateDepthCount={isAdmin ? handleUpdateCellDepthCount : undefined}
         onToggleCellEnabled={isAdmin ? handleToggleCellEnabled : undefined}
+        onReorderBooks={canEdit ? handleReorderBooksInDepth : undefined}
       />
 
       {/* Ficha detallada del libro seleccionado */}

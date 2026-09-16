@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { Book, Shelf, ShelfCell } from "@/lib/types";
 import { booksAtDepth, depthLabel } from "@/lib/selectors";
 import { BookSpine } from "./book-spine";
@@ -18,6 +18,7 @@ interface CellDepthModalProps {
   onRelocateBook?: (book: Book) => void;
   onUpdateDepthCount?: (cellId: string, newDepthCount: number) => void;
   onToggleCellEnabled?: (cell: ShelfCell, enabled: boolean) => void;
+  onReorderBooks?: (updatedBooks: Book[]) => void;
 }
 
 export function CellDepthModal({
@@ -34,9 +35,16 @@ export function CellDepthModal({
   onRelocateBook,
   onUpdateDepthCount,
   onToggleCellEnabled,
+  onReorderBooks,
 }: CellDepthModalProps) {
   const { canEdit, isAdmin } = useAuth();
   const [showConfirmDisable, setShowConfirmDisable] = useState(false);
+
+  // Estados para reordenación visual mediante Drag & Drop y Touch
+  const [draggedBookId, setDraggedBookId] = useState<string | null>(null);
+  const [draggedDepth, setDraggedDepth] = useState<number | null>(null);
+  const [dragOverBookId, setDragOverBookId] = useState<string | null>(null);
+  const touchStateRef = useRef<{ bookId: string; depth: number } | null>(null);
 
   if (!cell) return null;
 
@@ -149,6 +157,119 @@ export function CellDepthModal({
     setShowConfirmDisable(false);
     onToggleCellEnabled?.(cell, false);
     onClose();
+  };
+
+  // Reordenar libros dentro de la misma profundidad cambiando su posición secuencial
+  const handleReorderInDepth = (sourceId: string, targetId: string, depth: number) => {
+    if (!onReorderBooks || sourceId === targetId) return;
+    const currentDepthBooks = booksAtDepth(cellBooks, cell, depth);
+    const sourceIndex = currentDepthBooks.findIndex((b) => b.id === sourceId);
+    const targetIndex = currentDepthBooks.findIndex((b) => b.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const reordered = [...currentDepthBooks];
+    const [moved] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    const updated = reordered.map((b, idx) => ({
+      ...b,
+      location: {
+        ...b.location,
+        position: idx + 1,
+      },
+    }));
+
+    onReorderBooks(updated);
+  };
+
+  // Mover libro una posición a la izquierda (-1) o derecha (+1)
+  const handleMovePosition = (bookId: string, depth: number, delta: -1 | 1) => {
+    if (!onReorderBooks) return;
+    const currentDepthBooks = booksAtDepth(cellBooks, cell, depth);
+    const currentIndex = currentDepthBooks.findIndex((b) => b.id === bookId);
+    if (currentIndex === -1) return;
+    const targetIndex = currentIndex + delta;
+    if (targetIndex < 0 || targetIndex >= currentDepthBooks.length) return;
+
+    const reordered = [...currentDepthBooks];
+    const [moved] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    const updated = reordered.map((b, idx) => ({
+      ...b,
+      location: {
+        ...b.location,
+        position: idx + 1,
+      },
+    }));
+
+    onReorderBooks(updated);
+  };
+
+  // Handlers para Drag & Drop nativo en escritorio
+  const handleDragStart = (e: React.DragEvent, bookId: string, depth: number) => {
+    setDraggedBookId(bookId);
+    setDraggedDepth(depth);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", bookId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetBookId: string, depth: number) => {
+    if (draggedDepth === depth && draggedBookId && draggedBookId !== targetBookId) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setDragOverBookId(targetBookId);
+    }
+  };
+
+  const handleDragEnter = (targetBookId: string, depth: number) => {
+    if (draggedDepth === depth && draggedBookId && draggedBookId !== targetBookId) {
+      setDragOverBookId(targetBookId);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetBookId: string, depth: number) => {
+    e.preventDefault();
+    if (draggedBookId && draggedDepth === depth) {
+      handleReorderInDepth(draggedBookId, targetBookId, depth);
+    }
+    handleDragEnd();
+  };
+
+  const handleDragEnd = () => {
+    setDraggedBookId(null);
+    setDraggedDepth(null);
+    setDragOverBookId(null);
+  };
+
+  // Handlers para gestos táctiles en smartphones y tablets
+  const handleTouchStart = (e: React.TouchEvent, bookId: string, depth: number) => {
+    if (e.touches.length === 1) {
+      touchStateRef.current = { bookId, depth };
+      setDraggedBookId(bookId);
+      setDraggedDepth(depth);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent, depth: number) => {
+    if (!touchStateRef.current || touchStateRef.current.depth !== depth) return;
+    const touch = e.touches[0];
+    const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+    const container = targetEl?.closest("[data-book-id]");
+    if (container) {
+      const overId = container.getAttribute("data-book-id");
+      if (overId && overId !== touchStateRef.current.bookId) {
+        setDragOverBookId(overId);
+      }
+    }
+  };
+
+  const handleTouchEnd = (depth: number) => {
+    if (touchStateRef.current && dragOverBookId) {
+      handleReorderInDepth(touchStateRef.current.bookId, dragOverBookId, depth);
+    }
+    touchStateRef.current = null;
+    handleDragEnd();
   };
 
   return (
@@ -299,7 +420,7 @@ export function CellDepthModal({
               >
                 {/* Cabecera de la profundidad */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
                         isFront
@@ -314,6 +435,13 @@ export function CellDepthModal({
                         ? "Sin libros"
                         : `${depthBooks.length} ${depthBooks.length === 1 ? "libro" : "libros"}`}
                     </span>
+                    {canEdit && depthBooks.length > 1 && (
+                      <span className="text-[10px] text-amber-300/90 bg-amber-950/60 border border-amber-600/40 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium select-none shadow-sm">
+                        <span>⠿</span>
+                        <span className="hidden sm:inline">Arrastra para reordenar</span>
+                        <span className="sm:hidden">Reordenable</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
@@ -362,28 +490,92 @@ export function CellDepthModal({
                   </div>
                 </div>
 
-                {/* Balda gráfica con los libros alineados horizontalmente */}
+                {/* Balda gráfica con los libros alineados horizontalmente y reordenables */}
                 <div className="min-h-[130px] sm:min-h-[140px] rounded-lg bg-black/40 border-b-4 border-amber-950/70 px-3 sm:px-4 py-3 flex items-end justify-start gap-2 overflow-x-auto shadow-inner">
                   {depthBooks.length > 0 ? (
-                    depthBooks.map((book) => (
-                      <div key={book.id} className="flex flex-col items-center gap-1 shrink-0">
-                        <div className="h-24 sm:h-28 flex items-end">
-                          <BookSpine
-                            book={book}
-                            selected={selectedBookId === book.id}
-                            highlighted={highlightedBookId === book.id}
-                            dimmed={Boolean(
-                              highlightedBookId && highlightedBookId !== book.id,
+                    depthBooks.map((book, bookIdx) => {
+                      const isDraggingThis = draggedBookId === book.id;
+                      const isDragOverThis = dragOverBookId === book.id && draggedDepth === d;
+
+                      return (
+                        <div
+                          key={book.id}
+                          data-book-id={book.id}
+                          draggable={canEdit && depthBooks.length > 1}
+                          onDragStart={(e) => handleDragStart(e, book.id, d)}
+                          onDragOver={(e) => handleDragOver(e, book.id, d)}
+                          onDragEnter={() => handleDragEnter(book.id, d)}
+                          onDrop={(e) => handleDrop(e, book.id, d)}
+                          onDragEnd={handleDragEnd}
+                          onTouchStart={(e) => handleTouchStart(e, book.id, d)}
+                          onTouchMove={(e) => handleTouchMove(e, d)}
+                          onTouchEnd={() => handleTouchEnd(d)}
+                          className={`group flex flex-col items-center gap-1 shrink-0 select-none transition-all duration-150 relative p-1 rounded-xl ${
+                            canEdit && depthBooks.length > 1
+                              ? "cursor-grab active:cursor-grabbing hover:bg-slate-800/40"
+                              : ""
+                          } ${
+                            isDraggingThis
+                              ? "opacity-30 scale-95 ring-2 ring-amber-400 bg-amber-500/10"
+                              : isDragOverThis
+                                ? "border-l-4 border-amber-400 pl-2 bg-amber-500/15"
+                                : ""
+                          }`}
+                        >
+                          <div className="h-24 sm:h-28 flex items-end">
+                            <BookSpine
+                              book={book}
+                              selected={selectedBookId === book.id}
+                              highlighted={highlightedBookId === book.id}
+                              dimmed={Boolean(
+                                highlightedBookId && highlightedBookId !== book.id,
+                              )}
+                              locationLabel={`Posición ${book.location.position}`}
+                              onSelect={onSelectBook}
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-0.5 mt-0.5">
+                            {canEdit && depthBooks.length > 1 && (
+                              <button
+                                type="button"
+                                disabled={bookIdx === 0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMovePosition(book.id, d, -1);
+                                }}
+                                className="w-4 h-4 rounded flex items-center justify-center text-[10px] text-slate-400 hover:text-amber-300 hover:bg-slate-800 disabled:opacity-15 disabled:pointer-events-none cursor-pointer transition-colors"
+                                title="Mover una posición a la izquierda"
+                                aria-label="Mover a la izquierda"
+                              >
+                                ◀
+                              </button>
                             )}
-                            locationLabel={`Posición ${book.location.position}`}
-                            onSelect={onSelectBook}
-                          />
+                            <span
+                              className="text-[10px] text-slate-400 font-mono font-medium px-1"
+                              title={`Posición ${book.location.position} de ${depthBooks.length}`}
+                            >
+                              Pos. {book.location.position}
+                            </span>
+                            {canEdit && depthBooks.length > 1 && (
+                              <button
+                                type="button"
+                                disabled={bookIdx === depthBooks.length - 1}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMovePosition(book.id, d, 1);
+                                }}
+                                className="w-4 h-4 rounded flex items-center justify-center text-[10px] text-slate-400 hover:text-amber-300 hover:bg-slate-800 disabled:opacity-15 disabled:pointer-events-none cursor-pointer transition-colors"
+                                title="Mover una posición a la derecha"
+                                aria-label="Mover a la derecha"
+                              >
+                                ▶
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium" title={`Posición ${book.location.position}`}>
-                          Pos. {book.location.position}
-                        </span>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="w-full flex flex-col items-center justify-center py-6 text-slate-400">
                       <span className="text-xs font-medium">Fila vacía</span>
@@ -397,27 +589,64 @@ export function CellDepthModal({
                 {/* Lista táctil adicional en móvil (< sm) para tocar libros fácilmente */}
                 {depthBooks.length > 0 && (
                   <div className="sm:hidden mt-3 pt-3 border-t border-slate-800 space-y-1.5">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Libros en esta fila ({depthBooks.length}):
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Libros en esta fila ({depthBooks.length}):
+                      </span>
+                      {canEdit && depthBooks.length > 1 && (
+                        <span className="text-[10px] text-amber-300/80 flex items-center gap-1">
+                          <span>↕</span>
+                          <span>Usa las flechas para reordenar</span>
+                        </span>
+                      )}
+                    </div>
                     <div className="flex flex-col gap-1.5">
-                      {depthBooks.map((b) => (
+                      {depthBooks.map((b, bIdx) => (
                         <div
                           key={b.id}
                           className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 text-left transition-colors min-h-[44px]"
                         >
-                          <button
-                            type="button"
-                            onClick={() => onSelectBook(b.id)}
-                            className="min-w-0 flex-1 pr-2 text-left cursor-pointer"
-                          >
-                            <span className="text-xs font-bold text-white block truncate">
-                              {b.title}
-                            </span>
-                            <span className="text-[11px] text-slate-400 block truncate">
-                              {b.author}
-                            </span>
-                          </button>
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {canEdit && depthBooks.length > 1 && (
+                              <div className="flex items-center gap-0.5 shrink-0 bg-slate-950/80 rounded-lg p-0.5 border border-slate-750">
+                                <button
+                                  type="button"
+                                  disabled={bIdx === 0}
+                                  onClick={() => handleMovePosition(b.id, d, -1)}
+                                  className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-amber-300 disabled:opacity-20 text-[10px] cursor-pointer"
+                                  title="Subir posición"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={bIdx === depthBooks.length - 1}
+                                  onClick={() => handleMovePosition(b.id, d, 1)}
+                                  className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-amber-300 disabled:opacity-20 text-[10px] cursor-pointer"
+                                  title="Bajar posición"
+                                >
+                                  ▼
+                                </button>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => onSelectBook(b.id)}
+                              className="min-w-0 flex-1 pr-2 text-left cursor-pointer"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-mono text-amber-400/80 bg-black/40 px-1.5 py-0.2 rounded shrink-0">
+                                  #{b.location.position}
+                                </span>
+                                <span className="text-xs font-bold text-white block truncate">
+                                  {b.title}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-slate-400 block truncate ml-6">
+                                {b.author}
+                              </span>
+                            </button>
+                          </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {canEdit && onRelocateBook && (
                               <button
