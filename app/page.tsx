@@ -876,39 +876,102 @@ export default function HomePage() {
       </main>
 
       {/* Suelo de la habitación: Rodapié y Parquet de madera */}
-      <div className="w-full flex flex-col mt-auto z-0">
+      <footer className="w-full flex flex-col mt-auto z-0">
         <div className="w-full h-4 skirting-board" />
-        <div className="w-full h-24 sm:h-28 parquet-floor shadow-2xl relative px-4 sm:px-8 py-3 flex items-center justify-between">
-          <div className="flex flex-wrap items-center gap-4 text-xs text-amber-200/80">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#0e1626] border border-slate-700 inline-block" />
-              <span>Disponible</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm pattern-disabled border border-slate-800 inline-block" />
-              <span>No disponible</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-amber-950 border border-amber-600 inline-block" />
-              <span>Con libros al fondo</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-slate-800 border border-slate-600 inline-block" />
-              <span>Múltiples profundidades</span>
-            </div>
-          </div>
+        <div className="w-full parquet-floor shadow-2xl relative px-4 sm:px-8 py-4 sm:py-5 border-t border-black/40">
+          <div className="max-w-7xl 2xl:max-w-[1550px] mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Contenedor principal de la leyenda */}
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Guía visual de la estantería</span>
+                </span>
+                <span className="text-slate-600 hidden sm:inline">•</span>
+                <span className="text-[11px] text-amber-200/70 hidden sm:inline">
+                  Significado de los estados y distintivos en cada compartimento
+                </span>
+              </div>
 
-          {isAdmin && books.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearBooks}
-              className="text-xs text-amber-300/60 hover:text-red-400 transition-colors"
-            >
-              Vaciar todos los libros
-            </button>
-          )}
+              {/* Tarjetas explicativas con miniaturas visuales */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
+                {/* 1. Hueco libre */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 border border-slate-750/80 shadow-sm backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-[#080b12] border border-slate-700/80 flex items-center justify-center shrink-0 shadow-inner" />
+                  <div className="leading-tight">
+                    <span className="text-xs font-semibold text-slate-200 block">Hueco libre</span>
+                    <span className="text-[10px] text-slate-400 block">Listo para colocar libros</span>
+                  </div>
+                </div>
+
+                {/* 2. Primera fila */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 border border-slate-750/80 shadow-sm backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-[#0e1422] border border-slate-700/80 flex items-end justify-center gap-0.5 pb-0.5 shrink-0 shadow-inner px-0.5">
+                    <span className="w-1 h-3.5 bg-blue-500 rounded-t-[1px]" />
+                    <span className="w-1 h-4 bg-amber-500 rounded-t-[1px]" />
+                    <span className="w-1 h-3 bg-emerald-500 rounded-t-[1px]" />
+                  </div>
+                  <div className="leading-tight">
+                    <span className="text-xs font-semibold text-slate-200 block">Primera fila</span>
+                    <span className="text-[10px] text-slate-400 block">Libros visibles al frente</span>
+                  </div>
+                </div>
+
+                {/* 3. Fila al fondo (+N) */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 border border-amber-500/30 shadow-sm backdrop-blur-sm">
+                  <span className="text-[9px] font-bold text-amber-300 bg-amber-950/90 border border-amber-600/70 px-1 py-0.5 rounded shadow-sm shrink-0 font-mono">
+                    +2
+                  </span>
+                  <div className="leading-tight">
+                    <span className="text-xs font-semibold text-amber-300 block">Fila del fondo (+N)</span>
+                    <span className="text-[10px] text-slate-400 block">Libros colocados detrás</span>
+                  </div>
+                </div>
+
+                {/* 4. Localizado por búsqueda */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 border border-amber-400/50 shadow-sm shadow-amber-950/30 backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-amber-950/50 border border-amber-400 ring-1 ring-amber-400/80 flex items-center justify-center shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  </div>
+                  <div className="leading-tight">
+                    <span className="text-xs font-semibold text-amber-200 block">Localizado</span>
+                    <span className="text-[10px] text-slate-400 block">Resaltado por búsqueda</span>
+                  </div>
+                </div>
+
+                {/* 5. Bloqueado / No disponible */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 border border-slate-750/80 shadow-sm backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-[#0a0f1d] pattern-disabled border border-slate-800 flex items-center justify-center shrink-0 text-slate-500">
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div className="leading-tight">
+                    <span className="text-xs font-semibold text-slate-400 block">Bloqueado</span>
+                    <span className="text-[10px] text-slate-500 block">Decoración o sin uso</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Acciones de administración en el pie */}
+            {isAdmin && books.length > 0 && (
+              <div className="flex items-center self-start lg:self-center shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-amber-950/40">
+                <button
+                  type="button"
+                  onClick={handleClearBooks}
+                  className="px-3 py-1.5 rounded-xl text-xs font-medium text-red-300 hover:text-white bg-red-950/40 hover:bg-red-900/60 border border-red-800/50 transition-all cursor-pointer shadow-sm"
+                  title="Eliminar todos los libros del catálogo actual"
+                >
+                  Vaciar todos los libros
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </footer>
 
       {/* Banner / HUD flotante de localización física */}
       {highlightedBook && highlightedBookLocation && (
