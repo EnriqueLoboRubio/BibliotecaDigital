@@ -1,6 +1,7 @@
 import type { Book, LibraryCatalog, Room, Shelf, ShelfCell } from "@/lib/types";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { fetchBookCover } from "@/lib/services/open-library";
 
 export const initialRoom: Room = {
   id: "room-1",
@@ -754,6 +755,11 @@ export async function getCatalog(): Promise<LibraryCatalog> {
           }
         }
 
+        // Disparar enriquecimiento automático de portadas en segundo plano
+        if (typeof window !== "undefined") {
+          void enrichBooksWithCovers(validBooks);
+        }
+
         return {
           room: rooms[0] || initialRoom,
           rooms: rooms.length > 0 ? rooms : [initialRoom],
@@ -910,7 +916,7 @@ export function subscribeToLibraryChanges(
 }
 
 /**
- * Libros de ejemplo basados en obras reales
+ * Libros de ejemplo basados en obras reales con portadas oficiales
  */
 export const SAMPLE_BOOKS: Book[] = [
   {
@@ -920,6 +926,7 @@ export const SAMPLE_BOOKS: Book[] = [
     isbn: "978-8420412146",
     year: 1605,
     genre: "Clásico",
+    cover: "https://covers.openlibrary.org/b/id/12817454-L.jpg",
     location: {
       shelfId: "shelf-A",
       row: 1,
@@ -935,6 +942,7 @@ export const SAMPLE_BOOKS: Book[] = [
     isbn: "978-0307474728",
     year: 1967,
     genre: "Realismo Mágico",
+    cover: "https://covers.openlibrary.org/b/id/8315182-L.jpg",
     location: {
       shelfId: "shelf-A",
       row: 1,
@@ -950,6 +958,7 @@ export const SAMPLE_BOOKS: Book[] = [
     isbn: "978-9681603014",
     year: 1950,
     genre: "Ensayo",
+    cover: "https://covers.openlibrary.org/b/id/8231999-L.jpg",
     location: {
       shelfId: "shelf-A",
       row: 1,
@@ -965,6 +974,7 @@ export const SAMPLE_BOOKS: Book[] = [
     isbn: "978-8420633114",
     year: 1944,
     genre: "Ficción",
+    cover: "https://covers.openlibrary.org/b/id/8235116-L.jpg",
     location: {
       shelfId: "shelf-A",
       row: 2,
@@ -980,6 +990,7 @@ export const SAMPLE_BOOKS: Book[] = [
     isbn: "978-8420633121",
     year: 1949,
     genre: "Ficción",
+    cover: "https://covers.openlibrary.org/b/id/9052951-L.jpg",
     location: {
       shelfId: "shelf-A",
       row: 2,
@@ -995,6 +1006,7 @@ export const SAMPLE_BOOKS: Book[] = [
     isbn: "978-8466331821",
     year: 1963,
     genre: "Novela",
+    cover: "https://covers.openlibrary.org/b/id/8227092-L.jpg",
     location: {
       shelfId: "shelf-A",
       row: 3,
@@ -1004,3 +1016,50 @@ export const SAMPLE_BOOKS: Book[] = [
     },
   },
 ];
+
+let isEnrichingCovers = false;
+
+/**
+ * Enriquecer libros almacenados sin portada buscando automáticamente en Open Library.
+ * Guarda en localStorage y sincroniza con Supabase.
+ */
+export async function enrichBooksWithCovers(
+  books: Book[],
+  onUpdate?: (updated: Book[]) => void,
+): Promise<Book[]> {
+  const needsCover = books.filter((b) => !b.cover && (b.isbn || (b.title && !b.title.startsWith("Libro ("))));
+  if (needsCover.length === 0 || isEnrichingCovers) {
+    return books;
+  }
+
+  isEnrichingCovers = true;
+  try {
+    let hasChanges = false;
+    const updatedBooks = [...books];
+
+    for (const book of needsCover) {
+      try {
+        const cover = await fetchBookCover(book.isbn, book.title, book.author);
+        if (cover) {
+          const idx = updatedBooks.findIndex((b) => b.id === book.id);
+          if (idx !== -1) {
+            updatedBooks[idx] = { ...updatedBooks[idx], cover };
+            hasChanges = true;
+          }
+        }
+      } catch (err) {
+        console.warn(`[enrichBooks] Error resolviendo portada para ${book.title}:`, err);
+      }
+    }
+
+    if (hasChanges) {
+      saveBooksToStorage(updatedBooks);
+      void syncSaveBooksToSupabase(updatedBooks);
+      onUpdate?.(updatedBooks);
+    }
+    return updatedBooks;
+  } finally {
+    isEnrichingCovers = false;
+  }
+}
+

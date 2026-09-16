@@ -145,3 +145,64 @@ export async function fetchBookByISBN(rawIsbn: string): Promise<FetchedBookMetad
 
   return null;
 }
+
+/**
+ * Busca y resuelve la mejor URL de portada para un libro por ISBN, título y/o autor.
+ */
+export async function fetchBookCover(
+  isbn?: string,
+  title?: string,
+  author?: string,
+): Promise<string | null> {
+  const normalizedIsbn = isbn ? cleanISBN(isbn) : "";
+
+  // 1. Si hay ISBN válido, probar primero Open Library por ISBN
+  if (normalizedIsbn && (normalizedIsbn.length === 10 || normalizedIsbn.length === 13)) {
+    try {
+      const meta = await fetchBookByISBN(normalizedIsbn);
+      if (meta?.cover) {
+        return meta.cover;
+      }
+    } catch {
+      // Continuar a búsqueda por texto
+    }
+    // Fallback de URL directa de ISBN
+    return `https://covers.openlibrary.org/b/isbn/${normalizedIsbn}-L.jpg`;
+  }
+
+  // 2. Si hay título (y autor), buscar en Open Library Search
+  if (title && title.trim().length > 2 && !title.toLowerCase().startsWith("libro (")) {
+    try {
+      const query = [title.trim(), author && author !== "Autor desconocido" ? author.trim() : ""]
+        .filter(Boolean)
+        .join(" ");
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=1`;
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        const doc = data.docs?.[0];
+        if (doc) {
+          if (doc.cover_i) {
+            return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+          }
+          if (Array.isArray(doc.isbn) && doc.isbn.length > 0) {
+            return `https://covers.openlibrary.org/b/isbn/${doc.isbn[0]}-L.jpg`;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[fetchBookCover] Error buscando por título:", err);
+    }
+  }
+
+  return null;
+}
+

@@ -178,46 +178,60 @@ export function SearchBox({
                   return (
                     <li key={hit.book.id} role="option" aria-selected={false}>
                       <div className="p-3 sm:p-4 hover:bg-slate-850/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 group border-l-2 border-transparent hover:border-amber-400">
-                        {/* Datos bibliográficos y Ubicación */}
-                        <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
-                          <div>
-                            <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-amber-300 transition-colors leading-snug">
-                              {hit.book.title}
-                            </h4>
-                            <p className="text-xs text-slate-300 mt-0.5">
-                              {hit.book.author}
-                            </p>
-                            {hit.book.isbn && (
-                              <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                                ISBN: <span className="text-slate-300">{hit.book.isbn}</span>
+                        {/* Portada en miniatura y datos bibliográficos con ubicación */}
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          {hit.book.cover ? (
+                            <img
+                              src={hit.book.cover}
+                              alt={hit.book.title}
+                              className="w-12 h-16 sm:w-14 sm:h-20 rounded-lg object-cover border border-slate-700/80 shadow-md shrink-0 mt-0.5"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-12 h-16 sm:w-14 sm:h-20 rounded-lg bg-slate-850 border border-slate-750 flex items-center justify-center text-slate-500 text-lg shrink-0 mt-0.5 shadow-inner">
+                              📖
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
+                            <div>
+                              <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-amber-300 transition-colors leading-snug">
+                                {hit.book.title}
+                              </h4>
+                              <p className="text-xs text-slate-300 mt-0.5">
+                                {hit.book.author}
                               </p>
-                            )}
-                          </div>
+                              {hit.book.isbn && (
+                                <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                                  ISBN: <span className="text-slate-300">{hit.book.isbn}</span>
+                                </p>
+                              )}
+                            </div>
 
-                          {/* Bloque estructurado de Ubicación Física */}
-                          <div className="pt-1.5 sm:pt-2 border-t border-slate-800/80">
-                            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
-                              Ubicación:
-                            </span>
-                            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium text-[11px] sm:text-xs">
-                                📍 {loc.roomName}
+                            {/* Bloque estructurado de Ubicación Física */}
+                            <div className="pt-1.5 sm:pt-2 border-t border-slate-800/80">
+                              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+                                Ubicación:
                               </span>
-                              <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium text-[11px] sm:text-xs">
-                                🗄️ {loc.shelfName}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-md bg-amber-950/90 text-amber-200 border border-amber-600/60 font-semibold text-[11px] sm:text-xs">
-                                Fila {loc.row} · Columna {loc.column}
-                              </span>
-                              <span
-                                className={`px-2 py-0.5 rounded-md font-semibold text-[11px] sm:text-xs border ${
-                                  isBehind
-                                    ? "bg-amber-950 text-amber-300 border-amber-700/60"
-                                    : "bg-slate-800/90 text-slate-300 border-slate-700"
-                                }`}
-                              >
-                                {isBehind ? "Fila del fondo (detrás)" : "Primera fila (al frente)"}
-                              </span>
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                                <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium text-[11px] sm:text-xs">
+                                  📍 {loc.roomName}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium text-[11px] sm:text-xs">
+                                  🗄️ {loc.shelfName}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md bg-amber-950/90 text-amber-200 border border-amber-600/60 font-semibold text-[11px] sm:text-xs">
+                                  Fila {loc.row} · Columna {loc.column}
+                                </span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-md font-semibold text-[11px] sm:text-xs border ${
+                                    isBehind
+                                      ? "bg-amber-950 text-amber-300 border-amber-700/60"
+                                      : "bg-slate-800/90 text-slate-300 border-slate-700"
+                                  }`}
+                                >
+                                  {isBehind ? "Fila del fondo (detrás)" : "Primera fila (al frente)"}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>

@@ -48,16 +48,29 @@ export function BookDetail({
 
         {/* Portada decorativa y metadatos */}
         <div className="flex gap-3 sm:gap-4 items-start">
-          {/* Lomo / Portada simulada elegante */}
-          <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg bg-gradient-to-br from-blue-900 to-indigo-950 border border-blue-500/30 shadow-lg flex flex-col justify-between p-1.5 sm:p-2 shrink-0 select-none">
-            <div className="w-full h-1 bg-amber-400/50 rounded" />
-            <span className="text-[9px] sm:text-[10px] font-bold text-slate-200 line-clamp-3 text-center leading-tight">
-              {book.title}
-            </span>
-            <span className="text-[7px] sm:text-[8px] text-blue-300 truncate text-center">
-              {book.author}
-            </span>
-          </div>
+          {/* Lomo / Portada real o simulada */}
+          {book.cover ? (
+            <div className="w-20 sm:w-28 h-28 sm:h-40 rounded-xl overflow-hidden shadow-2xl border border-slate-700/80 shrink-0 relative select-none group">
+              <img
+                src={book.cover}
+                alt={book.title}
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+              <div className="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/40 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 shadow-inner pointer-events-none rounded-xl" />
+            </div>
+          ) : (
+            <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg bg-gradient-to-br from-blue-900 to-indigo-950 border border-blue-500/30 shadow-lg flex flex-col justify-between p-1.5 sm:p-2 shrink-0 select-none">
+              <div className="w-full h-1 bg-amber-400/50 rounded" />
+              <span className="text-[9px] sm:text-[10px] font-bold text-slate-200 line-clamp-3 text-center leading-tight">
+                {book.title}
+              </span>
+              <span className="text-[7px] sm:text-[8px] text-blue-300 truncate text-center">
+                {book.author}
+              </span>
+            </div>
+          )}
 
           <div className="flex-1 min-w-0">
             <h2 className="text-base sm:text-xl font-bold text-white leading-snug">

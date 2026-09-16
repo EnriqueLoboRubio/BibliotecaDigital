@@ -522,17 +522,50 @@ export function CellDepthModal({
                                 : ""
                           }`}
                         >
-                          <div className="h-24 sm:h-28 flex items-end">
-                            <BookSpine
-                              book={book}
-                              selected={selectedBookId === book.id}
-                              highlighted={highlightedBookId === book.id}
-                              dimmed={Boolean(
-                                highlightedBookId && highlightedBookId !== book.id,
-                              )}
-                              locationLabel={`Posición ${book.location.position}`}
-                              onSelect={onSelectBook}
-                            />
+                          <div className="h-28 sm:h-32 flex items-end">
+                            {book.cover ? (
+                              <button
+                                type="button"
+                                onClick={() => onSelectBook(book.id)}
+                                className={`
+                                  w-[72px] sm:w-[84px] h-[104px] sm:h-[120px] rounded-md overflow-hidden relative group/cover
+                                  border border-slate-700/80 shadow-md transition-all duration-200 select-none shrink-0 cursor-pointer
+                                  hover:-translate-y-1.5 hover:shadow-xl hover:shadow-black/60 hover:border-amber-400
+                                  ${selectedBookId === book.id ? "ring-2 ring-blue-400 -translate-y-2 z-20 shadow-xl" : ""}
+                                  ${highlightedBookId === book.id ? "ring-2 ring-amber-400 scale-105 z-20 shadow-lg shadow-amber-400/40" : ""}
+                                  ${Boolean(highlightedBookId && highlightedBookId !== book.id) ? "opacity-25 grayscale hover:opacity-80 hover:grayscale-0" : "opacity-100"}
+                                `}
+                                title={`${book.title} - ${book.author}`}
+                              >
+                                <img
+                                  src={book.cover}
+                                  alt={book.title}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                                {/* Lomo simulado en el borde izquierdo */}
+                                <div className="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/50 via-black/20 to-transparent pointer-events-none rounded-l-md" />
+                                {/* Reflejo satinado */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none rounded-md" />
+
+                                {/* Tooltip al pasar el ratón */}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/cover:flex flex-col items-center px-2 py-1 bg-slate-950/95 text-slate-100 text-[10px] rounded-lg shadow-xl whitespace-nowrap z-30 pointer-events-none border border-slate-700 max-w-[180px]">
+                                  <span className="font-semibold text-amber-300 truncate w-full text-center">{book.title}</span>
+                                  <span className="text-slate-400 text-[9px] truncate w-full text-center">{book.author}</span>
+                                </div>
+                              </button>
+                            ) : (
+                              <BookSpine
+                                book={book}
+                                selected={selectedBookId === book.id}
+                                highlighted={highlightedBookId === book.id}
+                                dimmed={Boolean(
+                                  highlightedBookId && highlightedBookId !== book.id,
+                                )}
+                                locationLabel={`Posición ${book.location.position}`}
+                                onSelect={onSelectBook}
+                              />
+                            )}
                           </div>
 
                           <div className="flex items-center gap-0.5 mt-0.5">
@@ -627,6 +660,18 @@ export function CellDepthModal({
                                 >
                                   ▼
                                 </button>
+                              </div>
+                            )}
+                            {b.cover ? (
+                              <img
+                                src={b.cover}
+                                alt={b.title}
+                                className="w-8 h-11 rounded-md object-cover border border-slate-750 shrink-0 shadow-sm"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-8 h-11 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">
+                                📖
                               </div>
                             )}
                             <button

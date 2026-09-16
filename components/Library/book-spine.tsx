@@ -66,9 +66,23 @@ export function BookSpine({
         ${selected ? "ring-2 ring-blue-400 -translate-y-2 z-20 shadow-xl" : "hover:-translate-y-1.5 hover:z-10"}
       `}
     >
+      {/* Imagen de cubierta si está disponible */}
+      {book.cover && (
+        <div className="absolute inset-0 z-10 overflow-hidden rounded-sm">
+          <img
+            src={book.cover}
+            alt={book.title}
+            className="w-full h-full object-cover select-none"
+            loading="lazy"
+          />
+          {/* Sombra sutil para realismo de lomo */}
+          <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+        </div>
+      )}
+
       {/* Brillo cilíndrico longitudinal 2.5D sobre el lomo */}
       <div
-        className="absolute inset-0 pointer-events-none rounded-sm opacity-50 mix-blend-overlay z-10"
+        className="absolute inset-0 pointer-events-none rounded-sm opacity-50 mix-blend-overlay z-20"
         style={{
           background:
             "linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(255,255,255,0.05) 20%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.05) 80%, rgba(0,0,0,0.6) 100%)",
@@ -81,25 +95,33 @@ export function BookSpine({
         <div className="w-full h-[0.5px] bg-stone-900/25" />
       </div>
 
-      {/* Detalle de costilla superior del lomo */}
-      <div className={`w-full h-1 sm:h-1.5 border-t border-b ${color.accent} mt-0.5 z-20 shrink-0`} />
+      {/* Detalle de costilla superior del lomo (solo si no tiene portada) */}
+      {!book.cover && (
+        <div className={`w-full h-1 sm:h-1.5 border-t border-b ${color.accent} mt-0.5 z-20 shrink-0`} />
+      )}
 
-      {/* Título en vertical */}
-      <div className="flex-1 overflow-hidden flex items-center justify-center py-0.5 sm:py-1 px-0.5 z-20">
-        <span
-          className={`text-[8px] sm:text-[10px] md:text-[11px] font-semibold leading-tight tracking-tight ${color.text} whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]`}
-          style={{
-            writingMode: "vertical-rl",
-            transform: "rotate(180deg)",
-            maxHeight: "94%",
-          }}
-        >
-          {book.title}
-        </span>
-      </div>
+      {/* Título en vertical (solo si no tiene portada) */}
+      {!book.cover ? (
+        <div className="flex-1 overflow-hidden flex items-center justify-center py-0.5 sm:py-1 px-0.5 z-20">
+          <span
+            className={`text-[8px] sm:text-[10px] md:text-[11px] font-semibold leading-tight tracking-tight ${color.text} whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]`}
+            style={{
+              writingMode: "vertical-rl",
+              transform: "rotate(180deg)",
+              maxHeight: "94%",
+            }}
+          >
+            {book.title}
+          </span>
+        </div>
+      ) : (
+        <div className="flex-1" />
+      )}
 
       {/* Detalle de costilla inferior */}
-      <div className={`w-full h-1 border-t border-b ${color.accent} mb-0.5 z-20 shrink-0`} />
+      {!book.cover && (
+        <div className={`w-full h-1 border-t border-b ${color.accent} mb-0.5 z-20 shrink-0`} />
+      )}
 
       {/* Sombra de contacto en la base de la repisa */}
       <div
@@ -107,11 +129,23 @@ export function BookSpine({
         aria-hidden="true"
       />
 
-      {/* Tooltip con información rápida */}
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center px-2 py-1 bg-slate-950/95 text-slate-100 text-[10px] rounded shadow-xl whitespace-nowrap z-30 pointer-events-none border border-slate-700">
-        <span className="font-semibold text-amber-300">{book.title}</span>
-        <span className="text-slate-400 text-[9px]">{book.author}</span>
-      </span>
+      {/* Tooltip con información rápida y miniatura de portada */}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center p-2 bg-slate-950/95 text-slate-100 rounded-xl shadow-2xl z-40 pointer-events-none border border-slate-700 min-w-[130px] max-w-[200px] animate-in fade-in zoom-in-95 duration-150">
+        {book.cover && (
+          <img
+            src={book.cover}
+            alt={book.title}
+            className="w-14 h-20 object-cover rounded-md shadow-md mb-1.5 border border-slate-750"
+            loading="lazy"
+          />
+        )}
+        <span className="font-semibold text-amber-300 text-[11px] text-center leading-tight line-clamp-2">
+          {book.title}
+        </span>
+        <span className="text-slate-400 text-[9.5px] mt-0.5 text-center truncate w-full">
+          {book.author}
+        </span>
+      </div>
     </button>
   );
 }
