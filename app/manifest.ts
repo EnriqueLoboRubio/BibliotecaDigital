@@ -1,0 +1,53 @@
+import type { MetadataRoute } from "next";
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: "Biblioteca Digital",
+    short_name: "Biblioteca",
+    description: "Gestión y localización física de libros en estanterías IKEA Kallax",
+    start_url: "/",
+    display: "standalone",
+    orientation: "portrait-primary",
+    background_color: "#090d16",
+    theme_color: "#090d16",
+    scope: "/",
+    id: "biblioteca-digital-kallax",
+    categories: ["books", "lifestyle", "productivity", "utilities"],
+    icons: [
+      {
+        src: "/icons/icon-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/maskable-icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
+    ],
+    shortcuts: [
+      {
+        name: "Catálogo de Libros",
+        short_name: "Libros",
+        description: "Ver todos los libros de la biblioteca",
+        url: "/books",
+        icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+      },
+      {
+        name: "Muebles y Estanterías",
+        short_name: "Muebles",
+        description: "Ver distribución física de estanterías",
+        url: "/shelves",
+        icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+      },
+    ],
+  };
+}
