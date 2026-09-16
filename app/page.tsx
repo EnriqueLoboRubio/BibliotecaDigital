@@ -13,7 +13,6 @@ import {
   initialRoom,
   initialShelves,
   renameRoom,
-  SAMPLE_BOOKS,
   saveBooksToStorage,
   saveCellsToStorage,
   subscribeToLibraryChanges,
@@ -29,6 +28,7 @@ import { SearchBox } from "@/components/Search";
 import { BookDetail, AddBookModal, EditBookModal } from "@/components/book";
 import { CreateRoomModal, FloorPlant, RoomSelector, WallArt } from "@/components/room";
 import { ShelfDigitizationModal } from "@/components/digitize";
+import { LoginModal } from "@/components/auth";
 import { useAuth } from "@/lib/auth/context";
 
 export default function HomePage() {
@@ -57,6 +57,7 @@ export default function HomePage() {
   const [addLocation, setAddLocation] = useState<{ row: number; column: number; depth: number } | undefined>();
   const [isDigitizeModalOpen, setIsDigitizeModalOpen] = useState(false);
   const [digitizeInitialCell, setDigitizeInitialCell] = useState<{ row: number; column: number; depth: number } | undefined>();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   // Carga inicial del catálogo y detección de ?book= en URL
@@ -198,6 +199,10 @@ export default function HomePage() {
 
   // Guardar nuevo libro y actualizar celda si tiene nueva profundidad
   const handleSaveBook = (newBook: Book, updatedCell?: ShelfCell) => {
+    if (!canEdit) {
+      setIsLoginOpen(true);
+      return;
+    }
     startTransition(() => {
       const updatedBooks = [...books, newBook];
       setBooks(updatedBooks);
@@ -256,6 +261,10 @@ export default function HomePage() {
 
   // Integrar libros confirmados por el usuario desde la digitalización con IA
   const handleConfirmDigitizedBooks = (newBooks: Book[]) => {
+    if (!canEdit) {
+      setIsLoginOpen(true);
+      return;
+    }
     startTransition(() => {
       const updatedBooks = [...books, ...newBooks];
       setBooks(updatedBooks);
@@ -419,12 +428,6 @@ export default function HomePage() {
     setBooks((prev) => prev.filter((b) => b.location.shelfId !== shelfId));
     const nextShelf = displayedShelves.find((s) => s.id !== shelfId) || catalog.shelves.find((s) => s.id !== shelfId);
     setActiveShelfId(nextShelf?.id || "shelf-A");
-  };
-
-  // Cargar libros de demostración
-  const handleLoadSamples = () => {
-    setBooks(SAMPLE_BOOKS);
-    saveBooksToStorage(SAMPLE_BOOKS);
   };
 
   // Vaciar estantería (solo admin)
@@ -611,38 +614,46 @@ export default function HomePage() {
 
                 {/* Botones de acción integrados directamente en el dashboard */}
                 <div className="flex flex-wrap items-center gap-2 ml-auto sm:ml-0 pt-1 sm:pt-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAddLocation(undefined);
-                      setIsAddModalOpen(true);
-                    }}
-                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-md shadow-amber-950/40 border border-amber-400/30 transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>+ Añadir libro</span>
-                  </button>
+                  {canEdit ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddLocation(undefined);
+                          setIsAddModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-md shadow-amber-950/40 border border-amber-400/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>+ Añadir libro</span>
+                      </button>
 
-                  {activeShelf && (
+                      {activeShelf && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDigitizeInitialCell(undefined);
+                            setIsDigitizeModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-amber-500/40 hover:border-amber-400 shadow-md shadow-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                          title="Digitalizar estantería o compartimento mediante fotografía e IA"
+                        >
+                          <span>📸 Digitalizar con IA</span>
+                        </button>
+                      )}
+                    </>
+                  ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setDigitizeInitialCell(undefined);
-                        setIsDigitizeModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-amber-500/40 hover:border-amber-400 shadow-md shadow-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
-                      title="Digitalizar estantería o compartimento mediante fotografía e IA"
+                      onClick={() => setIsLoginOpen(true)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-300 hover:text-amber-200 bg-slate-850 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-400/60 shadow-md shadow-black/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                      title="Inicia sesión para añadir libros o digitalizar estanterías"
                     >
-                      <span>📸 Digitalizar con IA</span>
+                      <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <span>Iniciar sesión para añadir libros</span>
                     </button>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={handleLoadSamples}
-                    className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800/90 hover:bg-slate-750 border border-slate-700/80 transition-colors"
-                  >
-                    {books.length === 0 ? "Cargar ejemplos" : "Cargar ejemplos"}
-                  </button>
                 </div>
               </div>
             )}
@@ -968,10 +979,18 @@ export default function HomePage() {
         onClose={() => setInspectingCell(null)}
         onSelectBook={(bookId) => setSelectedBookId(bookId)}
         onAddBookToCell={(row, column, depth) => {
+          if (!canEdit) {
+            setIsLoginOpen(true);
+            return;
+          }
           setAddLocation({ row, column, depth });
           setIsAddModalOpen(true);
         }}
         onDigitizeCell={(row, column, depth) => {
+          if (!canEdit) {
+            setIsLoginOpen(true);
+            return;
+          }
           setDigitizeInitialCell({ row, column, depth });
           setIsDigitizeModalOpen(true);
           setInspectingCell(null);
@@ -1006,7 +1025,7 @@ export default function HomePage() {
       )}
 
       {/* Modal para registrar un nuevo libro */}
-      {isAddModalOpen && activeShelf && (
+      {isAddModalOpen && activeShelf && canEdit && (
         <AddBookModal
           shelf={activeShelf}
           cells={activeShelfCells}
@@ -1034,7 +1053,7 @@ export default function HomePage() {
       />
 
       {/* Modal para digitalización de estantería o cubo con IA */}
-      {isDigitizeModalOpen && activeShelf && (
+      {isDigitizeModalOpen && activeShelf && canEdit && (
         <ShelfDigitizationModal
           isOpen={isDigitizeModalOpen}
           onClose={() => setIsDigitizeModalOpen(false)}
@@ -1045,6 +1064,9 @@ export default function HomePage() {
           onConfirmBooks={handleConfirmDigitizedBooks}
         />
       )}
+
+      {/* Modal de inicio de sesión cuando se requiera autenticación */}
+      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );
 }

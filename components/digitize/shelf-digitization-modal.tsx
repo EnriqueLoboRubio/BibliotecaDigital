@@ -1,6 +1,4 @@
-"use client";
-
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import type {
   Book,
   CandidateConfidence,
@@ -44,7 +42,13 @@ export function ShelfDigitizationModal({
   const [activeCandidateId, setActiveCandidateId] = useState<string | null>(null);
   const [filteredObjectsCount, setFilteredObjectsCount] = useState<number>(0);
 
+  // Estados y referencias para la cámara en directo
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<"environment" | "user">("environment");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraFileInputRef = useRef<HTMLInputElement>(null);
 
   // Celdas habilitadas del mueble actual
   const enabledCells = useMemo(
@@ -56,6 +60,89 @@ export function ShelfDigitizationModal({
     () => new Set(enabledCells.map((c) => `${c.row}-${c.column}`)),
     [enabledCells],
   );
+
+  // Detener la cámara web de forma limpia
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  // Iniciar la transmisión de la cámara web
+  const startCamera = async (facing: "environment" | "user" = cameraFacing) => {
+    stopCamera();
+    setErrorMessage(null);
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        cameraFileInputRef.current?.click();
+        return;
+      }
+
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: facing },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setIsCameraActive(true);
+    } catch (err) {
+      console.warn("[Camera] Error accediendo a getUserMedia:", err);
+      // Fallback a selector de cámara nativo
+      cameraFileInputRef.current?.click();
+    }
+  };
+
+  // Alternar entre cámara trasera y delantera
+  const toggleCameraFacing = () => {
+    const nextFacing = cameraFacing === "environment" ? "user" : "environment";
+    setCameraFacing(nextFacing);
+    if (isCameraActive) {
+      void startCamera(nextFacing);
+    }
+  };
+
+  // Capturar fotograma actual de la cámara web
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base64 = canvas.toDataURL("image/jpeg", 0.92);
+    stopCamera();
+    setImagePreview(base64);
+    setErrorMessage(null);
+    setCandidates([]);
+    processImage(base64);
+  };
+
+  // Limpiar stream al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -299,6 +386,10 @@ export function ShelfDigitizationModal({
       aria-modal="true"
       aria-labelledby="digitize-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
+      onClick={() => {
+        stopCamera();
+        onClose();
+      }}
     >
       <div
         className="w-full max-w-5xl rounded-2xl bg-slate-900 border border-slate-750 shadow-2xl flex flex-col max-h-[94vh] text-slate-100 overflow-hidden my-auto"
@@ -330,7 +421,10 @@ export function ShelfDigitizationModal({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              stopCamera();
+              onClose();
+            }}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             aria-label="Cerrar ventana"
           >
@@ -406,8 +500,8 @@ export function ShelfDigitizationModal({
             </div>
           )}
 
-          {/* Botones de acción para cargar imagen */}
-          <div className="flex items-center gap-2 ml-auto">
+          {/* Botones de acción para cargar o capturar imagen */}
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
             <input
               ref={fileInputRef}
               type="file"
@@ -415,6 +509,28 @@ export function ShelfDigitizationModal({
               className="hidden"
               onChange={handleFileChange}
             />
+            <input
+              ref={cameraFileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            <button
+              type="button"
+              onClick={() => startCamera()}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold shadow-md shadow-amber-950/40 border border-amber-400/30 transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Abrir cámara para fotografiar directamente la estantería"
+            >
+              <svg className="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Usar Cámara</span>
+            </button>
+
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -423,7 +539,7 @@ export function ShelfDigitizationModal({
               <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
-              <span>Subir Fotografía</span>
+              <span>Subir Archivo</span>
             </button>
 
             <button
@@ -467,40 +583,128 @@ export function ShelfDigitizationModal({
         {/* Cuerpo Principal del Modal */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5">
           {!imagePreview ? (
-            /* Estado Inicial: Zona de Arrastre */
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-750 hover:border-amber-500/60 rounded-2xl p-10 flex flex-col items-center justify-center text-center gap-4 bg-slate-950/40 hover:bg-slate-950/70 transition-all cursor-pointer min-h-[350px]"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-slate-850 border border-slate-700 flex items-center justify-center text-amber-400 shadow-xl">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+            isCameraActive ? (
+              /* Visor de Cámara en Directo */
+              <div className="relative rounded-2xl overflow-hidden border-2 border-amber-500/40 bg-black flex flex-col items-center justify-center min-h-[380px] max-h-[500px] shadow-2xl">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover max-h-[480px] rounded-xl"
+                />
+
+                {/* Guía visual de encuadre */}
+                <div className="absolute inset-3 sm:inset-6 border-2 border-dashed border-amber-400/50 rounded-xl pointer-events-none flex flex-col justify-between p-3">
+                  <div className="text-[11px] font-semibold text-amber-200 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full self-center border border-amber-500/40 shadow-lg">
+                    <span>Enfoca la estantería o balda con los libros de frente</span>
+                  </div>
+
+                  {/* Rejilla suave de encuadre */}
+                  <div className="grid grid-cols-4 grid-rows-4 w-full h-full opacity-20 my-2 border border-amber-300 pointer-events-none">
+                    {Array.from({ length: 16 }).map((_, i) => (
+                      <div key={i} className="border border-amber-300" />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Barra de control de captura inferior */}
+                <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-4 z-20 px-4">
+                  <button
+                    type="button"
+                    onClick={toggleCameraFacing}
+                    className="p-3 rounded-full bg-slate-900/85 hover:bg-slate-800 text-amber-300 border border-slate-700 shadow-xl backdrop-blur-md cursor-pointer transition-transform active:scale-95"
+                    title="Girar cámara (trasera / frontal)"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="px-6 py-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white font-bold text-sm shadow-xl shadow-amber-950/80 border-2 border-white/90 flex items-center gap-2 cursor-pointer transition-transform active:scale-95"
+                  >
+                    <span className="w-3.5 h-3.5 rounded-full bg-white animate-pulse" />
+                    <span>Capturar estantería</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="p-3 rounded-full bg-slate-900/85 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 shadow-xl backdrop-blur-md cursor-pointer transition-transform active:scale-95"
+                    title="Cerrar cámara"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <div className="max-w-md">
-                <h3 className="text-base font-bold text-white">
-                  Arrastra o selecciona la fotografía de tu estantería
-                </h3>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Soporta imágenes frontales de tu mueble completo o de un compartimento individual. La IA detectará los lomos, descartará plantas u objetos decorativos y te permitirá confirmar antes de guardar.
-                </p>
+            ) : (
+              /* Estado Inicial: Zona de Arrastre */
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-slate-750 hover:border-amber-500/60 rounded-2xl p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-4 bg-slate-950/40 hover:bg-slate-950/70 transition-all cursor-pointer min-h-[350px]"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-slate-850 border border-slate-700 flex items-center justify-center text-amber-400 shadow-xl">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="max-w-md">
+                  <h3 className="text-base font-bold text-white">
+                    Fotografía tu estantería física o sube una imagen
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Usa la cámara directamente o selecciona un archivo. La IA detectará los lomos, descartará plantas u objetos decorativos y te permitirá confirmar antes de guardar.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startCamera();
+                    }}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold shadow-lg shadow-amber-950/40 border border-amber-400/40 flex items-center gap-2 cursor-pointer transition-all"
+                  >
+                    <svg className="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Abrir Cámara</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span>Subir archivo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLoadSampleImage();
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 text-xs font-medium border border-slate-750 cursor-pointer"
+                  >
+                    Foto de muestra
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-md">
-                  Examinar archivos
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLoadSampleImage();
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700"
-                >
-                  Probar con foto de muestra
-                </button>
-              </div>
-            </div>
+            )
           ) : isLoading ? (
             /* Estado de Carga con Radar de Visión */
             <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
@@ -536,7 +740,7 @@ export function ShelfDigitizationModal({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={handleAddManualCandidate}
@@ -546,10 +750,21 @@ export function ShelfDigitizationModal({
                   </button>
                   <button
                     type="button"
+                    onClick={() => {
+                      setImagePreview(null);
+                      setCandidates([]);
+                      startCamera();
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-medium border border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>📸 Nueva foto con cámara</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium border border-slate-700 transition-colors"
                   >
-                    Cambiar foto
+                    Cambiar archivo
                   </button>
                 </div>
               </div>
@@ -777,7 +992,10 @@ export function ShelfDigitizationModal({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                stopCamera();
+                onClose();
+              }}
               className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
             >
               Cancelar

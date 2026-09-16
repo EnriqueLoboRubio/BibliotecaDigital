@@ -15,6 +15,7 @@ import {
   updateBook,
 } from "@/lib/data";
 import { resolveLocation } from "@/lib/selectors";
+import { useAuth } from "@/lib/auth/context";
 import type { Book, LibraryCatalog, ShelfCell } from "@/lib/types";
 
 export default function BookDetailPage({
@@ -23,6 +24,7 @@ export default function BookDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
+  const { canEdit } = useAuth();
   const resolvedParams = use(params);
   const bookId = resolvedParams.id;
 
@@ -66,6 +68,7 @@ export default function BookDetailPage({
   const isBehind = book.location.depth > 1;
 
   const handleUpdateBook = (updatedBook: Book, updatedCell?: ShelfCell) => {
+    if (!canEdit) return;
     const newBooks = updateBook(updatedBook);
     setCatalog((prev) => ({
       ...prev,
@@ -83,6 +86,7 @@ export default function BookDetailPage({
   };
 
   const handleDeleteBook = (idToDelete: string) => {
+    if (!canEdit) return;
     deleteBook(idToDelete);
     router.push("/books");
   };
@@ -183,13 +187,15 @@ export default function BookDetailPage({
             </Link>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all flex items-center gap-1.5"
-              >
-                <span>✏️ Editar / Reubicar</span>
-              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>✏️ Editar / Reubicar</span>
+                </button>
+              )}
 
               <Link
                 href={`/?book=${book.id}`}
@@ -206,7 +212,7 @@ export default function BookDetailPage({
         </article>
       </main>
 
-      {isEditing && (
+      {canEdit && isEditing && (
         <EditBookModal
           book={book}
           shelves={catalog.shelves}
