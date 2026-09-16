@@ -255,22 +255,22 @@ export function CellDepthModal({
               <button
                 type="button"
                 onClick={() => onUpdateDepthCount(cell.id, cell.depthCount + 1)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 transition-all flex items-center gap-1.5 shadow-sm min-h-[36px]"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 transition-all flex items-center gap-1.5 shadow-sm min-h-[36px] cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>+ Fila al fondo</span>
+                <span>Añadir fila al fondo</span>
               </button>
 
               {cell.depthCount > 1 && booksAtDepth(cellBooks, cell, cell.depthCount).length === 0 && (
                 <button
                   type="button"
                   onClick={() => onUpdateDepthCount(cell.id, cell.depthCount - 1)}
-                  className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all min-h-[36px]"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all min-h-[36px] cursor-pointer"
                   title="Eliminar fila vacía del fondo"
                 >
-                  - Quitar fila
+                  Quitar fila vacía
                 </button>
               )}
             </div>
@@ -330,9 +330,12 @@ export function CellDepthModal({
                           <button
                             type="button"
                             onClick={() => onAddBookToCell(cell.row, cell.column, d)}
-                            className="text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/60 px-3 py-1.5 rounded-xl border border-amber-700/50 transition-colors flex items-center justify-center gap-1.5 shadow-sm min-h-[36px]"
+                            className="text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/60 px-3 py-1.5 rounded-xl border border-amber-700/50 transition-colors flex items-center justify-center gap-1.5 shadow-sm min-h-[36px] cursor-pointer"
                           >
-                            <span>+ Colocar libro</span>
+                            <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span>Colocar libro</span>
                           </button>
                         )}
                       </>

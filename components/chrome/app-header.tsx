@@ -119,7 +119,7 @@ export function AppHeader({ title, currentLocation, bookCount, onAddBook }: AppH
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
                 </svg>
                 <span className="hidden sm:inline">Registrar Libro</span>
-                <span className="sm:hidden text-[11px] font-bold">+ Libro</span>
+                <span className="sm:hidden text-[11px] font-bold">Libro</span>
               </button>
             )}
 

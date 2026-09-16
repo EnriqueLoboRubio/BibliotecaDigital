@@ -229,7 +229,7 @@ export function UserManagementModal({ isOpen, onClose }: UserManagementModalProp
                 disabled={isCreating}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 active:bg-purple-700 shadow-md shadow-purple-600/25 transition-all cursor-pointer disabled:opacity-50"
               >
-                {isCreating ? "Creando..." : "+ Dar de Alta Usuario"}
+                {isCreating ? "Creando..." : "Dar de alta usuario"}
               </button>
             </div>
           </form>

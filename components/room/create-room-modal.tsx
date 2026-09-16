@@ -130,7 +130,7 @@ export function CreateRoomModal({ isOpen, onClose, onCreateRoom }: CreateRoomMod
               type="submit"
               className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 shadow-md shadow-indigo-600/25 transition-all cursor-pointer"
             >
-              + Crear Habitación
+              Crear Habitación
             </button>
           </div>
         </form>

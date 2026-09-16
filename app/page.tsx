@@ -624,7 +624,10 @@ export default function HomePage() {
                         }}
                         className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 shadow-md shadow-amber-950/40 border border-amber-400/30 transition-all flex items-center gap-1.5 cursor-pointer"
                       >
-                        <span>+ Añadir libro</span>
+                        <svg className="w-3.5 h-3.5 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Añadir libro</span>
                       </button>
 
                       {activeShelf && (
@@ -764,12 +767,12 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={() => setIsAddShelfModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-amber-300 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 shadow-md transition-all flex items-center gap-1.5 shrink-0 hover:border-amber-500/40"
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-amber-300 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 shadow-md transition-all flex items-center gap-1.5 shrink-0 hover:border-amber-500/40 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>+ Nuevo Mueble</span>
+                <span>Nuevo Mueble</span>
               </button>
             )}
           </section>
@@ -811,7 +814,7 @@ export default function HomePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <span>+ Nuevo Mueble</span>
+                <span>Nuevo Mueble</span>
               </button>
             ) : (
               <p className="text-xs text-slate-500 italic bg-slate-900/60 px-4 py-2.5 rounded-xl border border-slate-800">
