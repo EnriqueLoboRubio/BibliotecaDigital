@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { LibraryCatalog, Room } from "@/lib/types";
+import { useAuth } from "@/lib/auth/context";
 import {
   downloadCatalogBackupJson,
   downloadBooksCsv,
@@ -25,6 +26,7 @@ export function BackupModal({
   rooms,
   onBackupRestored,
 }: BackupModalProps) {
+  const { isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<"export" | "restore">("export");
   const [dragOver, setDragOver] = useState(false);
   const [previewBackup, setPreviewBackup] = useState<LibraryBackupData | null>(null);
@@ -34,7 +36,7 @@ export function BackupModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isAdmin) return null;
 
   const handleProcessFile = (file: File) => {
     setValidationError(null);
@@ -116,11 +118,16 @@ export function BackupModal({
               </svg>
             </div>
             <div>
-              <h2 id="backup-modal-title" className="text-base font-bold text-white tracking-tight">
-                Copias de Seguridad
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 id="backup-modal-title" className="text-base font-bold text-white tracking-tight">
+                  Copias de Seguridad
+                </h2>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-950/80 border border-purple-700/60 text-purple-300 uppercase">
+                  Solo Administrador
+                </span>
+              </div>
               <p className="text-xs text-slate-400">
-                Exporta o restaura todo el catálogo y distribución de tu biblioteca
+                Exporta o restaura todo el catálogo y distribución de tu biblioteca física
               </p>
             </div>
           </div>

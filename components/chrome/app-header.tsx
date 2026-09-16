@@ -159,7 +159,7 @@ export function AppHeader({
                   </button>
                 )}
 
-                {canEdit && onOpenBackup && (
+                {isAdmin && onOpenBackup && (
                   <button
                     type="button"
                     onClick={onOpenBackup}
@@ -279,7 +279,7 @@ export function AppHeader({
                       </button>
                     )}
 
-                    {canEdit && onOpenBackup && (
+                    {isAdmin && onOpenBackup && (
                       <button
                         type="button"
                         onClick={() => {

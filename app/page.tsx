@@ -637,7 +637,7 @@ export default function HomePage() {
         title="Biblioteca Digital"
         currentLocation={activeShelf ? `${activeRoom.name} · ${activeShelf.name}` : activeRoom.name}
         bookCount={books.length}
-        onOpenBackup={() => setIsBackupOpen(true)}
+        onOpenBackup={isAdmin ? () => setIsBackupOpen(true) : undefined}
         onAddBook={
           canEdit
             ? () => {
@@ -1318,23 +1318,25 @@ export default function HomePage() {
         }
       />
 
-      {/* Modal de Copias de Seguridad (Exportar JSON / CSV y Restaurar) */}
-      <BackupModal
-        isOpen={isBackupOpen}
-        onClose={() => setIsBackupOpen(false)}
-        catalog={catalog}
-        rooms={catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room]}
-        onBackupRestored={(restored) => {
-          setCatalog(restored);
-          setBooks(restored.books);
-          if (restored.rooms && restored.rooms.length > 0) {
-            setActiveRoomId(restored.rooms[0].id);
-          }
-          if (restored.shelves.length > 0) {
-            setActiveShelfId(restored.shelves[0].id);
-          }
-        }}
-      />
+      {/* Modal de Copias de Seguridad (Exportar JSON / CSV y Restaurar) - Solo Admin */}
+      {isAdmin && (
+        <BackupModal
+          isOpen={isBackupOpen && isAdmin}
+          onClose={() => setIsBackupOpen(false)}
+          catalog={catalog}
+          rooms={catalog.rooms && catalog.rooms.length > 0 ? catalog.rooms : [catalog.room]}
+          onBackupRestored={(restored) => {
+            setCatalog(restored);
+            setBooks(restored.books);
+            if (restored.rooms && restored.rooms.length > 0) {
+              setActiveRoomId(restored.rooms[0].id);
+            }
+            if (restored.shelves.length > 0) {
+              setActiveShelfId(restored.shelves[0].id);
+            }
+          }}
+        />
+      )}
 
       {/* Modal de inicio de sesión cuando se requiera autenticación */}
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
