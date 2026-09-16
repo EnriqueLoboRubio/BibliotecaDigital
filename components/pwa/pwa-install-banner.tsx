@@ -13,13 +13,15 @@ export function PwaInstallBanner() {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // 1. Registrar el Service Worker para Android PWA
+    // 1. Registrar el Service Worker para Android PWA y comprobar actualizaciones
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
           .register("/sw.js")
           .then((reg) => {
             console.log("[PWA] Service Worker activo:", reg.scope);
+            // Comprobar activamente si hay una versión más reciente en el servidor
+            void reg.update().catch(() => {});
           })
           .catch((err) => {
             console.warn("[PWA] No se pudo registrar Service Worker:", err);

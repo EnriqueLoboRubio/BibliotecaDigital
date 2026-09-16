@@ -1,5 +1,5 @@
 // Service Worker para PWA Biblioteca Digital (Android)
-const CACHE_NAME = "biblioteca-pwa-v1";
+const CACHE_NAME = "biblioteca-pwa-v2";
 
 const PRECACHE_ASSETS = [
   "/",
