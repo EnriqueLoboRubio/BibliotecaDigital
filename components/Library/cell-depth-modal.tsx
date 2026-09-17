@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Book, Shelf, ShelfCell } from "@/lib/types";
 import { booksAtDepth, depthLabel } from "@/lib/selectors";
 import { BookSpine } from "./book-spine";
@@ -46,14 +46,38 @@ export function CellDepthModal({
   const [dragOverBookId, setDragOverBookId] = useState<string | null>(null);
   const touchStateRef = useRef<{ bookId: string; depth: number } | null>(null);
 
-  if (!cell) return null;
+  const cellId = cell?.id;
+  const cellDepthCount = cell?.depthCount || 1;
+  const cellEnabled = Boolean(cell?.enabled);
 
-  const cellBooks = books.filter(
-    (b) =>
-      b.location.shelfId === cell.shelfId &&
-      b.location.row === cell.row &&
-      b.location.column === cell.column,
-  );
+  const cellBooks = cell
+    ? books.filter(
+        (b) =>
+          b.location.shelfId === cell.shelfId &&
+          b.location.row === cell.row &&
+          b.location.column === cell.column,
+      )
+    : [];
+
+  // Profundidad máxima efectiva considerando libros físicos y configuración
+  const maxBookDepth =
+    cellBooks.length > 0
+      ? Math.max(...cellBooks.map((b) => b.location.depth))
+      : 1;
+  const effectiveDepthCount = Math.max(cellDepthCount, maxBookDepth);
+
+  // Sincronizar automáticamente hacia Supabase si hay libros en profundidades mayores a depthCount
+  useEffect(() => {
+    if (cellId && cellEnabled && effectiveDepthCount > cellDepthCount) {
+      onUpdateDepthCount?.(cellId, effectiveDepthCount);
+    }
+  }, [effectiveDepthCount, cellDepthCount, cellId, cellEnabled, onUpdateDepthCount]);
+
+  // Ordenar desde la Primera fila (al frente, d=1) hacia el fondo (2, 3...)
+  // para que los libros de la primera fila sean inmediatamente visibles al abrir el modal
+  const depths = Array.from({ length: effectiveDepthCount }, (_, i) => i + 1);
+
+  if (!cell) return null;
 
   // Si el cubo está desactivado (sin uso), mostrar vista específica para activarlo
   if (!cell.enabled) {
@@ -138,11 +162,6 @@ export function CellDepthModal({
       </div>
     );
   }
-
-  // Profundidades ordenadas en planta:
-  // Arriba: profundidad mayor (fondo/detrás)
-  // Abajo: profundidad 1 (frente)
-  const depths = Array.from({ length: cell.depthCount }, (_, i) => cell.depthCount - i);
 
   const handleStartDisable = () => {
     if (cellBooks.length > 0) {
@@ -297,14 +316,14 @@ export function CellDepthModal({
               </span>
               <span className="text-slate-600">•</span>
               <span className="text-slate-400">
-                {cell.depthCount} {cell.depthCount === 1 ? "nivel" : "niveles"}
+                {effectiveDepthCount} {effectiveDepthCount === 1 ? "nivel" : "niveles"}
               </span>
             </div>
             <h2 id="cell-modal-title" className="text-lg sm:text-xl font-bold tracking-tight text-white leading-snug">
               Libros en este compartimento
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Vista en profundidad: fondo arriba y primera fila al frente.
+              Vista de filas: primera fila al frente y filas sucesivas hacia el fondo.
             </p>
           </div>
           <button
@@ -379,7 +398,7 @@ export function CellDepthModal({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={() => onUpdateDepthCount(cell.id, cell.depthCount + 1)}
+                onClick={() => onUpdateDepthCount(cell.id, effectiveDepthCount + 1)}
                 className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/60 transition-all flex items-center gap-1.5 shadow-sm min-h-[36px] cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -388,10 +407,10 @@ export function CellDepthModal({
                 <span>Añadir fila al fondo</span>
               </button>
 
-              {cell.depthCount > 1 && booksAtDepth(cellBooks, cell, cell.depthCount).length === 0 && (
+              {effectiveDepthCount > 1 && booksAtDepth(cellBooks, cell, effectiveDepthCount).length === 0 && (
                 <button
                   type="button"
-                  onClick={() => onUpdateDepthCount(cell.id, cell.depthCount - 1)}
+                  onClick={() => onUpdateDepthCount(cell.id, effectiveDepthCount - 1)}
                   className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 transition-all min-h-[36px] cursor-pointer"
                   title="Eliminar fila vacía del fondo"
                 >
@@ -402,12 +421,16 @@ export function CellDepthModal({
           )}
         </div>
 
-        {/* Filas de profundidad desplegadas en planta */}
+        {/* Filas de profundidad desplegadas en orden frontal a fondo */}
         <div className="flex flex-col gap-4 sm:gap-6 my-1">
           {depths.map((d) => {
             const depthBooks = booksAtDepth(cellBooks, cell, d);
             const isFront = d === 1;
-            const label = depthLabel(d);
+            const label = isFront
+              ? "Primera fila (al frente)"
+              : d === 2
+                ? "Segunda fila (detrás)"
+                : `Fila ${d} (fondo)`;
 
             return (
               <div

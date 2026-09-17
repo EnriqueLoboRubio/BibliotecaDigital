@@ -166,20 +166,20 @@ export async function fetchBookCover(
     } catch {
       // Continuar a búsqueda por texto
     }
-    // Fallback de URL directa de ISBN
-    return `https://covers.openlibrary.org/b/isbn/${normalizedIsbn}-L.jpg`;
   }
 
-  // 2. Si hay título (y autor), buscar en Open Library Search
+  // 2. Buscar en Open Library Search por título y autor
   if (title && title.trim().length > 2 && !title.toLowerCase().startsWith("libro (")) {
     try {
-      const query = [title.trim(), author && author !== "Autor desconocido" ? author.trim() : ""]
-        .filter(Boolean)
-        .join(" ");
+      const cleanTitle = title.replace(/\(.*?\)/g, "").trim();
+      const cleanAuthor = author && author !== "Autor desconocido" && author !== "Sin metadatos automáticos"
+        ? author.trim()
+        : "";
+      const query = [cleanTitle, cleanAuthor].filter(Boolean).join(" ");
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
-      const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=1`;
+      const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`;
       const res = await fetch(url, {
         signal: controller.signal,
         headers: { Accept: "application/json" },
@@ -188,13 +188,9 @@ export async function fetchBookCover(
 
       if (res.ok) {
         const data = await res.json();
-        const doc = data.docs?.[0];
-        if (doc) {
+        for (const doc of data.docs || []) {
           if (doc.cover_i) {
             return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
-          }
-          if (Array.isArray(doc.isbn) && doc.isbn.length > 0) {
-            return `https://covers.openlibrary.org/b/isbn/${doc.isbn[0]}-L.jpg`;
           }
         }
       }

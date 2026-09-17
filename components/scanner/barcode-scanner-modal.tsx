@@ -58,6 +58,24 @@ export function BarcodeScannerModal({
   // Mapa de anti-rebote para evitar re-escanear el mismo código en menos de 3.5 segundos
   const recentScansRef = useRef<Map<string, number>>(new Map());
 
+  // Limpiar la cola si se cambia de cubo/destino de colocación
+  const currentTargetKey = batchTargetInfo
+    ? `${batchTargetInfo.shelfName || ""}-${batchTargetInfo.row}-${batchTargetInfo.column}-${batchTargetInfo.depth}`
+    : null;
+  const lastTargetKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      currentTargetKey !== null &&
+      lastTargetKeyRef.current !== null &&
+      currentTargetKey !== lastTargetKeyRef.current
+    ) {
+      setBatchQueue([]);
+      recentScansRef.current.clear();
+    }
+    lastTargetKeyRef.current = currentTargetKey;
+  }, [currentTargetKey]);
+
   // Reproducir un pitido breve de confirmación de lectura mediante AudioContext nativo
   const playBeep = () => {
     try {
@@ -141,8 +159,8 @@ export function BarcodeScannerModal({
       author: "Consultando datos...",
     };
 
-    setBatchQueue((prev) => [newItem, ...prev]);
-    setLastScannedNotice(`✓ Escaneado: ${normalizedIsbn}`);
+    setBatchQueue((prev) => [...prev, newItem]);
+    setLastScannedNotice(`✓ Escaneado #${batchQueue.length + 1}: ${normalizedIsbn}`);
     setTimeout(() => setLastScannedNotice(null), 2500);
 
     // Búsqueda asíncrona de metadatos en Open Library
@@ -310,6 +328,8 @@ export function BarcodeScannerModal({
     if (batchQueue.length === 0) return;
     void stopScanner();
     onBatchConfirm?.(batchQueue);
+    setBatchQueue([]);
+    recentScansRef.current.clear();
     onClose();
   };
 
@@ -563,12 +583,18 @@ export function BarcodeScannerModal({
                 </div>
               ) : (
                 <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-1">
-                  {batchQueue.map((item) => (
+                  {batchQueue.map((item, idx) => (
                     <div
                       key={item.id}
                       className="p-2 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-2 text-xs"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span
+                          className="text-[10px] font-mono font-bold text-amber-400 bg-amber-950/80 border border-amber-600/40 rounded px-1.5 py-0.5 shrink-0"
+                          title={`Libro #${idx + 1} escaneado`}
+                        >
+                          #{idx + 1}
+                        </span>
                         <div className="w-7 h-10 rounded bg-slate-800 border border-slate-700 shrink-0 overflow-hidden flex items-center justify-center">
                           {item.cover ? (
                             // eslint-disable-next-line @next/next/no-img-element

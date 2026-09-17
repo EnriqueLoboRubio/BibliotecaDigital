@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { BookSpineProps } from "@/lib/types";
 
 // Paleta editorial de colores elegantes para lomos físicos
@@ -34,6 +35,8 @@ export function BookSpine({
   locationLabel,
   onSelect,
 }: BookSpineProps) {
+  const [imgError, setImgError] = useState(false);
+  const hasCover = Boolean(book.cover && !imgError);
   const { color, heightPercent, mobileWidth, desktopWidth } = getSpineStyle(book.id);
 
   const state = [
@@ -67,16 +70,17 @@ export function BookSpine({
       `}
     >
       {/* Imagen de cubierta si está disponible */}
-      {book.cover && (
+      {hasCover && (
         <div className="absolute inset-0 z-10 overflow-hidden rounded-sm">
           <img
             src={book.cover}
             alt={book.title}
             className="w-full h-full object-cover select-none"
             loading="lazy"
+            onError={() => setImgError(true)}
           />
           {/* Sombra sutil para realismo de lomo */}
-          <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+          <div className="absolute inset-0 bg-black/25 pointer-events-none" />
         </div>
       )}
 
@@ -96,30 +100,30 @@ export function BookSpine({
       </div>
 
       {/* Detalle de costilla superior del lomo (solo si no tiene portada) */}
-      {!book.cover && (
+      {!hasCover && (
         <div className={`w-full h-1 sm:h-1.5 border-t border-b ${color.accent} mt-0.5 z-20 shrink-0`} />
       )}
 
-      {/* Título en vertical (solo si no tiene portada) */}
-      {!book.cover ? (
-        <div className="flex-1 overflow-hidden flex items-center justify-center py-0.5 sm:py-1 px-0.5 z-20">
-          <span
-            className={`text-[8px] sm:text-[10px] md:text-[11px] font-semibold leading-tight tracking-tight ${color.text} whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]`}
-            style={{
-              writingMode: "vertical-rl",
-              transform: "rotate(180deg)",
-              maxHeight: "94%",
-            }}
-          >
-            {book.title}
-          </span>
-        </div>
-      ) : (
-        <div className="flex-1" />
-      )}
+      {/* Título en vertical legible sobre el lomo */}
+      <div className="flex-1 overflow-hidden flex items-center justify-center py-0.5 sm:py-1 px-0.5 z-20 pointer-events-none">
+        <span
+          className={`text-[8px] sm:text-[10px] md:text-[11px] font-semibold leading-tight tracking-tight ${
+            hasCover
+              ? "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,1)] bg-black/30 px-0.5 rounded-sm"
+              : color.text
+          } whitespace-nowrap overflow-hidden text-ellipsis`}
+          style={{
+            writingMode: "vertical-rl",
+            transform: "rotate(180deg)",
+            maxHeight: "94%",
+          }}
+        >
+          {book.title}
+        </span>
+      </div>
 
       {/* Detalle de costilla inferior */}
-      {!book.cover && (
+      {!hasCover && (
         <div className={`w-full h-1 border-t border-b ${color.accent} mb-0.5 z-20 shrink-0`} />
       )}
 

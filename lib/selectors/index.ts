@@ -43,9 +43,9 @@ export function findCell(
 }
 
 export function depthLabel(depth: number): string {
-  if (depth === 1) return "Frente";
-  if (depth === 2) return "Detrás";
-  return `Fila de profundidad ${depth}`;
+  if (depth === 1) return "Primera fila (al frente)";
+  if (depth === 2) return "Segunda fila (detrás)";
+  return `Fila ${depth} (fondo)`;
 }
 
 export function resolveLocation(

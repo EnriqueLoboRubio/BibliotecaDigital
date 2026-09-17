@@ -392,15 +392,32 @@ export default function HomePage() {
       const updatedBooks = [...books, ...newBooks];
       setBooks(updatedBooks);
       saveBooksToStorage(updatedBooks);
+
+      // Sincronizar profundidad del cubo si se agregaron libros a una profundidad mayor
+      const targetCell = catalog.cells.find(
+        (c) =>
+          c.shelfId === burstScanTarget.shelfId &&
+          c.row === burstScanTarget.row &&
+          c.column === burstScanTarget.column,
+      );
+      let updatedCells = catalog.cells;
+      if (targetCell && burstScanTarget.depth > targetCell.depthCount) {
+        updatedCells = catalog.cells.map((c) =>
+          c.id === targetCell.id ? { ...c, depthCount: burstScanTarget.depth } : c,
+        );
+        saveCellsToStorage(updatedCells);
+      }
+
       setCatalog((prev) => ({
         ...prev,
+        cells: updatedCells,
         books: updatedBooks,
       }));
       setIsBurstScannerOpen(false);
       setBurstScanTarget(null);
       if (newBooks.length > 0) {
-        setHighlightedBookId(newBooks[newBooks.length - 1].id);
-        setSelectedBookId(newBooks[newBooks.length - 1].id);
+        setHighlightedBookId(newBooks[0].id);
+        setSelectedBookId(newBooks[0].id);
       }
     });
   };

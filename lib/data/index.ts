@@ -640,7 +640,7 @@ export async function getCatalog(): Promise<LibraryCatalog> {
             row: c.row,
             column: c.columna ?? c.column,
             enabled: c.enabled,
-            depthCount: c.depth_count,
+            depthCount: c.depth_count || 2,
             photo: c.photo || undefined,
           }))
           .sort((a, b) => (a.row !== b.row ? a.row - b.row : a.column - b.column));
@@ -660,6 +660,31 @@ export async function getCatalog(): Promise<LibraryCatalog> {
             position: b.position,
           },
         }));
+
+        // Sincronizar automáticamente la profundidad de los cubos según los libros que albergan
+        cells = cells.map((cell) => {
+          const booksInCell = books.filter(
+            (b) =>
+              b.location.shelfId === cell.shelfId &&
+              b.location.row === cell.row &&
+              b.location.column === cell.column,
+          );
+          const maxBookDepth =
+            booksInCell.length > 0
+              ? Math.max(...booksInCell.map((b) => b.location.depth))
+              : 1;
+          const targetDepth = Math.max(cell.depthCount || 2, maxBookDepth);
+          if (targetDepth > (cell.depthCount || 2)) {
+            if (isSupabaseConfigured && supabase) {
+              void supabase
+                .from("cells")
+                .update({ depth_count: targetDepth })
+                .eq("id", cell.id);
+            }
+            return { ...cell, depthCount: targetDepth };
+          }
+          return cell;
+        });
 
         // Si la base de datos en Supabase está vacía, sembrar la estantería inicial
         if (shelves.length === 0) {
@@ -1027,7 +1052,11 @@ export async function enrichBooksWithCovers(
   books: Book[],
   onUpdate?: (updated: Book[]) => void,
 ): Promise<Book[]> {
-  const needsCover = books.filter((b) => !b.cover && (b.isbn || (b.title && !b.title.startsWith("Libro ("))));
+  const needsCover = books.filter(
+    (b) =>
+      (!b.cover || b.cover.includes("/b/isbn/")) &&
+      (b.isbn || (b.title && !b.title.startsWith("Libro ("))),
+  );
   if (needsCover.length === 0 || isEnrichingCovers) {
     return books;
   }
